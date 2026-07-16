@@ -12,12 +12,13 @@ const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || '*';
 app.use(cors({ origin: CLIENT_ORIGIN }));
 const DEBUG = process.env.DEBUG !== 'false';
 
+const roomManager = new RoomManager();
+
 app.get('/health', (req, res) => {
-  const roomManager = new RoomManager();
   res.json({
     status: 'ok',
-    rooms: roomManager.getRoomCount(),
-    players: roomManager.getPlayerCount()
+    ...roomManager.getStats(),
+    timestamp: Date.now()
   });
 });
 
@@ -26,7 +27,7 @@ const io = new Server(server, {
   cors: { origin: CLIENT_ORIGIN, methods: ['GET', 'POST'] }
 });
 
-registerHandlers(io);
+registerHandlers(io, roomManager);
 
 if (process.env.NODE_ENV !== 'production') {
   import('vite').then(({ createServer: createViteServer }) => {
