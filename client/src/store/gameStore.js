@@ -3,7 +3,8 @@ let state = {
   room: null,
   player: null,
   phase: 'landing', // 'landing', 'lobby', 'game'
-  error: null
+  error: null,
+  chatMessages: []
 };
 
 const listeners = new Set();
@@ -24,13 +25,18 @@ export const gameStore = {
     state = { ...state, ...newState };
     emit();
   },
+  addChatMessage: (msg) => {
+    state = { ...state, chatMessages: [...state.chatMessages, msg] };
+    emit();
+  },
   reset: () => {
     state = {
       roomCode: null,
       room: null,
       player: null,
       phase: 'landing',
-      error: null
+      error: null,
+      chatMessages: []
     };
     emit();
   }

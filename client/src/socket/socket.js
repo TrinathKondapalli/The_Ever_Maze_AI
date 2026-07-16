@@ -60,6 +60,10 @@ socket.on(EVENTS.STATE_UPDATE, (data) => {
   }
 });
 
+socket.on(EVENTS.CHAT_MESSAGE_RECEIVED, (message) => {
+  gameStore.addChatMessage(message);
+});
+
 socket.on(EVENTS.MATCH_END, (data) => {
   const currentState = gameStore.getState();
   if (currentState.room) {

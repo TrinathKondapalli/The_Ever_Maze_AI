@@ -6,6 +6,7 @@ import { usePlayerController } from '../../hooks/usePlayerController.js';
 import { soundEngine } from '../../game/audio/soundEngine.js';
 import VirtualJoystick from './VirtualJoystick.jsx';
 import Minimap from './Minimap.jsx';
+import ChatBox from '../Chat/ChatBox.jsx';
 
 export default function GameScreen() {
   const { room } = useGameStore();
@@ -339,6 +340,11 @@ export default function GameScreen() {
           <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div>
           <div className="text-cyan-400 text-xl tracking-widest uppercase font-bold">Generating 3D Maze...</div>
         </div>
+      )}
+
+      {/* Global Chat Box */}
+      {matchPhase !== 'MATCH_END' && (
+        <ChatBox inGame={true} />
       )}
     </div>
   );

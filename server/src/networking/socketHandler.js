@@ -2,6 +2,18 @@ const { EVENTS, PHASE } = require('../../../shared/constants.js');
 const { sanitizeRoomForBroadcast, sanitizePlayer } = require('../utils/helpers.js');
 const { startGameLoop } = require('../game/gameLoop.js');
 
+function broadcastSystemMessage(io, roomCode, text) {
+  io.to(roomCode).emit(EVENTS.CHAT_MESSAGE_RECEIVED, {
+    id: `sys_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+    senderId: 'system',
+    senderName: 'System',
+    senderTeam: null,
+    text,
+    timestamp: Date.now(),
+    isSystem: true
+  });
+}
+
 function registerHandlers(io, roomManager) {
   startGameLoop(io, roomManager);
 
@@ -52,6 +64,7 @@ function registerHandlers(io, roomManager) {
             player: sanitizePlayer(result.data.player),
             room: sanitizeRoomForBroadcast(result.data.room)
           });
+          broadcastSystemMessage(io, result.data.roomCode, `${data.playerName} has joined the room.`);
         } else {
           if (typeof callback === 'function') callback({ success: false, error: result.error });
         }
@@ -194,6 +207,7 @@ function registerHandlers(io, roomManager) {
           if (typeof callback === 'function') callback({ success: true });
           const roomCode = roomManager.socketToRoom.get(socket.id);
           io.to(roomCode).emit(EVENTS.ROOM_UPDATE, { room: sanitizeRoomForBroadcast(result.data.room) });
+          broadcastSystemMessage(io, roomCode, `A bot was added to the room.`);
         } else {
           if (typeof callback === 'function') callback({ success: false, error: result.error });
         }
@@ -202,6 +216,39 @@ function registerHandlers(io, roomManager) {
       }
     });
 
+    socket.on(EVENTS.SEND_CHAT_MESSAGE, (data, callback) => {
+      try {
+        const roomCode = roomManager.socketToRoom.get(socket.id);
+        const room = roomManager.getRoomByCode(roomCode);
+        if (!room) throw new Error("Not in a room");
+        
+        const player = room.players[socket.id];
+        if (!player) throw new Error("Player not found in room");
+        
+        if (!data.text || typeof data.text !== 'string' || data.text.trim() === '') {
+           throw new Error("Invalid message");
+        }
+        
+        const message = {
+          id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+          senderId: socket.id,
+          senderName: player.name,
+          senderTeam: player.team,
+          text: data.text.trim().substring(0, 100), // Max 100 chars
+          timestamp: Date.now(),
+          isSystem: false
+        };
+        
+        // Broadcast to everyone in room
+        io.to(roomCode).emit(EVENTS.CHAT_MESSAGE_RECEIVED, message);
+        
+        if (typeof callback === 'function') callback({ success: true });
+      } catch (err) {
+        if (typeof callback === 'function') callback({ success: false, error: err.message });
+      }
+    });
+
+    // In-Game Events
     socket.on(EVENTS.PLAYER_MOVE, (position) => {
       const roomCode = roomManager.socketToRoom.get(socket.id);
       if (roomCode) {

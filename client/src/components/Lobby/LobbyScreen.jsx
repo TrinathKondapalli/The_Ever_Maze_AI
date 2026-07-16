@@ -2,20 +2,12 @@ import React from 'react';
 import socket from '../../socket/socket.js';
 import { useGameStore } from '../../hooks/useGameStore.js';
 import { EVENTS } from '../../constants/index.js';
+import ChatBox from '../Chat/ChatBox.jsx';
 
 export default function LobbyScreen() {
   const { room, roomCode, error } = useGameStore();
 
   if (!room) return <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">Loading room...</div>;
-
-  const myPlayer = room.players[socket.id] || Object.values(room.players).find(p => p.id === room.players[Object.keys(room.players)[0]]?.id); 
-  // Wait, socket.id is removed in sanitizeRoomForBroadcast! 
-  // The room.players object is keyed by socketId from the server.
-  // Wait! In helpers.js, sanitizeRoomForBroadcast does:
-  // for (const socketId in room.players) { safePlayers[socketId] = sanitizePlayer(room.players[socketId]); }
-  // So the keys ARE the socketIds! 
-  // Wait, if the keys are socketIds, then myPlayer can be accessed via room.players[socket.id].
-  // Yes, because socket.id on the client matches the key. Let's just use room.players[socket.id].
 
   const actualMyPlayer = room.players[socket.id];
   const isHost = actualMyPlayer?.isHost;
@@ -157,6 +149,11 @@ export default function LobbyScreen() {
             </div>
           )}
         </div>
+      </div>
+      
+      {/* Chat Box */}
+      <div className="absolute bottom-4 left-4 w-96 max-w-full">
+        <ChatBox inGame={false} />
       </div>
     </div>
   );
