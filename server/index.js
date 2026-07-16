@@ -7,8 +7,9 @@ const { registerHandlers } = require('./src/networking/socketHandler.js');
 const { RoomManager } = require('./src/rooms/roomManager.js');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || '*';
+app.use(cors({ origin: CLIENT_ORIGIN }));
 const DEBUG = process.env.DEBUG !== 'false';
 
 app.get('/health', (req, res) => {

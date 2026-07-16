@@ -9,6 +9,9 @@ function registerHandlers(io) {
     }
     socket.emit(EVENTS.ROOM_ERROR, { message: 'Server ready' });
 
+    socket.on('ping_request', () => {
+      socket.emit('pong_response', { time: Date.now() });
+    });
     socket.on(EVENTS.CREATE_ROOM, (data, callback) => {
       if (typeof callback === 'function') {
         callback({ success: false, error: 'Not implemented yet' });
