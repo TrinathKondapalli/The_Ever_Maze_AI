@@ -22,9 +22,12 @@ export function usePlayerController(maze, initialPosition) {
   // so the server can check proximity for gifts and the lost light
   const lastSyncRef = useRef(0);
 
+  const hasInitialized = useRef(false);
+  
   useEffect(() => {
-    if (initialPosition) {
+    if (initialPosition && !hasInitialized.current) {
       playerRef.current = { ...initialPosition };
+      hasInitialized.current = true;
       // Send initial position immediately so server knows we spawned
       socket.emit(EVENTS.PLAYER_MOVE, playerRef.current);
     }

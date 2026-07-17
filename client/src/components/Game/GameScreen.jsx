@@ -142,10 +142,11 @@ export default function GameScreen() {
       const isCarrier = room?.match?.lostLight?.carrierId === myActualSocketId;
 
       // Update my position
-      const p = updateMovement(dt, isCarrier, myPlayer);
+      const currentMyPlayer = playersRef.current[myActualSocketId];
+      const p = updateMovement(dt, isCarrier, currentMyPlayer);
       
       // Draw 3D world (walls + other players + light + gifts)
-      drawMaze(ctx, maze, canvas.width, canvas.height, p, playersRef.current, myActualSocketId, room?.match?.lostLight, room?.match?.gifts, myPlayer, matchPhaseRef.current, headBobRef.current.offset);
+      drawMaze(ctx, maze, canvas.width, canvas.height, p, playersRef.current, myActualSocketId, room?.match?.lostLight, room?.match?.gifts, currentMyPlayer, matchPhaseRef.current, headBobRef.current.offset);
       
       requestRef.current = requestAnimationFrame(renderFrame);
     };
@@ -153,7 +154,7 @@ export default function GameScreen() {
     requestRef.current = requestAnimationFrame(renderFrame);
 
     return () => cancelAnimationFrame(requestRef.current);
-  }, [maze, myPlayer]);
+  }, [maze, myActualSocketId]);
 
   const handleUseGift = () => {
     if (myPlayer?.activeGift) {
