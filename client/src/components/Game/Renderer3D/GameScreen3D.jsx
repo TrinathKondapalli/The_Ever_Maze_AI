@@ -99,7 +99,8 @@ export default function GameScreen3D() {
           <color attach="background" args={[isSuddenDeath ? '#220000' : '#030a16']} />
           <fog attach="fog" args={[isSuddenDeath ? '#220000' : '#030a16', 10, 50]} />
           
-          <ambientLight intensity={isSuddenDeath ? 0.1 : 0.2} />
+          <ambientLight intensity={isSuddenDeath ? 0.3 : 0.6} />
+          <directionalLight position={[10, 20, 10]} intensity={isSuddenDeath ? 0.2 : 1.5} castShadow />
           
           <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
 
@@ -176,7 +177,7 @@ export default function GameScreen3D() {
         
         {/* Minimap */}
         <div className="absolute top-4 right-4 pointer-events-auto shadow-[0_0_20px_rgba(0,0,0,0.5)] rounded-2xl overflow-hidden border-2 border-white/10">
-          <Minimap maze={maze} players={players} light={room?.match?.lostLight} myId={myActualSocketId} />
+          <Minimap maze={maze?.grid} myPlayer={myPlayer} players={players} lostLight={room?.match?.lostLight} myId={myActualSocketId} />
         </div>
       </div>
 
