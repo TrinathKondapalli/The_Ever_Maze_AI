@@ -1,6 +1,6 @@
 const { generatePlayerId } = require('../utils/helpers.js');
 
-function createRoom(hostSocketId, hostName, settings = {}) {
+function createRoom(hostSocketId, hostName, settings = {}, color = '#06b6d4') {
   return {
     code: null, // Assigned later
     createdAt: Date.now(),
@@ -11,7 +11,7 @@ function createRoom(hostSocketId, hostName, settings = {}) {
         socketId: hostSocketId,
         name: hostName,
         team: null,
-        color: '#06b6d4', // Default to Cyan
+        color: color,
         isReady: false,
         isHost: true,
         isConnected: true,

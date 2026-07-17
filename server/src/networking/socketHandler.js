@@ -28,12 +28,12 @@ function registerHandlers(io, roomManager) {
 
     socket.on(EVENTS.CREATE_ROOM, (data, callback) => {
       try {
-        const { playerName, settings, profileId } = data;
+        const { playerName, settings, color } = data;
         if (!playerName || playerName.length < 2) {
           throw new Error('Name must be at least 2 characters');
         }
         
-        const result = roomManager.createRoom(socket.id, playerName, settings);
+        const result = roomManager.createRoom(socket.id, playerName, color, settings);
         if (result.success) {
           socket.join(result.data.roomCode);
           if (typeof callback === 'function') {
@@ -54,8 +54,8 @@ function registerHandlers(io, roomManager) {
 
     socket.on(EVENTS.JOIN_ROOM, (data, callback) => {
       try {
-        const { roomCode, playerName, profileId } = data;
-        const result = roomManager.joinRoom(socket.id, roomCode, playerName);
+        const { roomCode, playerName, color } = data;
+        const result = roomManager.joinRoom(socket.id, roomCode, playerName, color);
         if (result.success) {
           socket.join(result.data.roomCode);
 
@@ -80,7 +80,29 @@ function registerHandlers(io, roomManager) {
       }
     });
 
-
+    socket.on(EVENTS.QUICK_JOIN, (data, callback) => {
+      try {
+        const { playerName, color } = data;
+        const result = roomManager.quickJoin(socket.id, playerName, color);
+        if (result.success) {
+          socket.join(result.data.roomCode);
+          if (typeof callback === 'function') {
+            callback({
+              success: true,
+              roomCode: result.data.roomCode,
+              room: sanitizeRoomForBroadcast(result.data.room),
+              player: result.data.room.players[socket.id]
+            });
+          }
+          io.to(result.data.roomCode).emit(EVENTS.ROOM_UPDATE, { room: sanitizeRoomForBroadcast(result.data.room) });
+          io.to(result.data.roomCode).emit(EVENTS.PLAYER_JOINED, { player: result.data.room.players[socket.id] });
+        } else {
+          if (typeof callback === 'function') callback({ success: false, error: result.error });
+        }
+      } catch (err) {
+        if (typeof callback === 'function') callback({ success: false, error: err.message });
+      }
+    });
 
     socket.on(EVENTS.LEAVE_ROOM, (data, callback) => {
       try {

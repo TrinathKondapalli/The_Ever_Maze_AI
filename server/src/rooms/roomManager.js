@@ -12,7 +12,7 @@ class RoomManager {
     this.socketToRoom = new Map();
   }
 
-  createRoom(socketId, playerName, settings = {}) {
+  createRoom(socketId, playerName, color, settings = {}) {
     if (!playerName || playerName.length < 2 || playerName.length > 20) {
       return { success: false, error: 'Invalid player name' };
     }
@@ -29,7 +29,7 @@ class RoomManager {
       return { success: false, error: 'Failed to generate unique room code' };
     }
 
-    const room = createRoom(socketId, playerName, settings);
+    const room = createRoom(socketId, playerName, settings, color);
     room.code = code;
     room.players[socketId].team = TEAM.A;
 
@@ -43,7 +43,7 @@ class RoomManager {
     return { success: true, data: { roomCode: code, player: room.players[socketId], room } };
   }
 
-  joinRoom(socketId, roomCode, playerName) {
+  joinRoom(socketId, roomCode, playerName, color) {
     if (!playerName || playerName.length < 2 || playerName.length > 20) {
       return { success: false, error: 'Invalid player name' };
     }
@@ -79,7 +79,7 @@ class RoomManager {
       socketId,
       name: playerName,
       team: assignedTeam,
-      color: getRandomColor(),
+      color: color || getRandomColor(),
 
       isHost: false,
       isConnected: true,
@@ -96,6 +96,23 @@ class RoomManager {
     this.socketToRoom.set(socketId, code);
 
     return { success: true, data: { roomCode: code, player: newPlayer, room } };
+  }
+
+  quickJoin(socketId, playerName, color) {
+    // Find an open room
+    let targetRoomCode = null;
+    for (const [code, room] of this.rooms.entries()) {
+      if (room.status === 'lobby' && Object.keys(room.players).length < 14) {
+        targetRoomCode = code;
+        break;
+      }
+    }
+
+    if (targetRoomCode) {
+      return this.joinRoom(socketId, targetRoomCode, playerName, color);
+    } else {
+      return this.createRoom(socketId, playerName, color);
+    }
   }
 
   addBot(hostSocketId) {
