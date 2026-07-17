@@ -237,7 +237,17 @@ export default function LobbyScreen() {
               </button>
             )}
           
-            {isHost ? (
+            {!actualMyPlayer?.isReady ? (
+              <button 
+                onClick={handleReady}
+                className="w-full sm:w-[250px] relative overflow-hidden group bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-500 hover:to-blue-700 border border-blue-400/50 rounded-2xl p-4 flex items-center justify-center transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+                <span className="text-lg font-bold tracking-widest text-white relative z-10 flex items-center gap-2">
+                  MARK AS READY <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                </span>
+              </button>
+            ) : isHost ? (
               <button 
                 onClick={handleStartGame}
                 disabled={!isTeamsBalanced}
@@ -254,16 +264,6 @@ export default function LobbyScreen() {
                   </span>
                   {!isTeamsBalanced && <span className="text-[9px] tracking-widest uppercase mt-1 block">Teams Unbalanced</span>}
                 </div>
-              </button>
-            ) : !actualMyPlayer?.isReady ? (
-              <button 
-                onClick={handleReady}
-                className="w-full sm:w-[250px] relative overflow-hidden group bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-500 hover:to-blue-700 border border-blue-400/50 rounded-2xl p-4 flex items-center justify-center transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)]"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-400/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-                <span className="text-lg font-bold tracking-widest text-white relative z-10 flex items-center gap-2">
-                  MARK AS READY <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                </span>
               </button>
             ) : (
               <div className="w-full sm:w-[250px] bg-green-900/30 border border-green-500/30 rounded-2xl p-4 flex flex-col items-center justify-center shadow-[0_0_20px_rgba(74,222,128,0.1)]">

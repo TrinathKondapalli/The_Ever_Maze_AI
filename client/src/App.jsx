@@ -2,7 +2,7 @@ import React from 'react';
 import { useGameStore } from './hooks/useGameStore.js';
 import LandingScreen from './components/Lobby/LandingScreen.jsx';
 import LobbyScreen from './components/Lobby/LobbyScreen.jsx';
-import GameScreen3D from './components/Game/Renderer3D/GameScreen3D.jsx';
+import GameScreen from './components/Game/GameScreen.jsx';
 
 export default function App() {
   const { phase } = useGameStore();
@@ -11,7 +11,7 @@ export default function App() {
     <>
       {phase === 'landing' && <LandingScreen />}
       {phase === 'lobby' && <LobbyScreen />}
-      {phase === 'game' && <GameScreen3D />}
+      {phase === 'game' && <GameScreen />}
     </>
   );
 }
