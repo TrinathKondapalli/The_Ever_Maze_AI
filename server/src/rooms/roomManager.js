@@ -80,7 +80,7 @@ class RoomManager {
       name: playerName,
       team: assignedTeam,
       color: getRandomColor(),
-      isReady: isSpectator ? true : false,
+
       isHost: false,
       isConnected: true,
       disconnectedAt: null,
@@ -120,7 +120,7 @@ class RoomManager {
       name: 'Bot ' + Math.floor(Math.random() * 1000),
       team: assignedTeam,
       color: getRandomColor(),
-      isReady: true, // Bots are always ready
+
       isHost: false,
       isConnected: true,
       disconnectedAt: null,
@@ -259,15 +259,7 @@ class RoomManager {
     return { success: true, data: { room } };
   }
 
-  toggleReady(socketId) {
-    const code = this.socketToRoom.get(socketId);
-    if (!code) return { success: false, error: 'Not in a room' };
-    const room = this.rooms.get(code);
-    if (room.status !== 'lobby') return { success: false, error: 'Cannot toggle ready during match' };
 
-    room.players[socketId].isReady = !room.players[socketId].isReady;
-    return { success: true, data: { room } };
-  }
 
   startGame(socketId) {
     const code = this.socketToRoom.get(socketId);
@@ -280,8 +272,15 @@ class RoomManager {
     const playerIds = Object.keys(room.players);
     if (playerIds.length < 2) return { success: false, error: 'Need at least 2 players' };
     
-    const allReady = playerIds.every(id => room.players[id].isReady);
-    if (!allReady) return { success: false, error: 'Not all players are ready' };
+    let teamA = 0;
+    let teamB = 0;
+    for (const id of playerIds) {
+      if (room.players[id].team === 'A') teamA++;
+      else if (room.players[id].team === 'B') teamB++;
+    }
+    
+    if (teamA === 0 || teamB === 0) return { success: false, error: 'Each team must have at least 1 player' };
+    if (teamA !== teamB) return { success: false, error: 'Teams must be balanced' };
 
     room.status = 'starting';
     return { success: true, data: { roomCode: code } };
@@ -299,11 +298,7 @@ class RoomManager {
     
     for (const sid in room.players) {
       const p = room.players[sid];
-      if (p.isHost) {
-         p.isReady = true;
-      } else if (!sid.startsWith('bot_')) {
-         p.isReady = false;
-      }
+
       p.position = null;
       p.gift = null;
       p.hasPickupImmunity = false;
@@ -322,7 +317,7 @@ class RoomManager {
     if (nextHostId) {
       room.hostId = nextHostId;
       room.players[nextHostId].isHost = true;
-      room.players[nextHostId].isReady = true;
+
       if (room.players[room.hostId] && room.hostId !== nextHostId) {
          room.players[room.hostId].isHost = false; 
       }

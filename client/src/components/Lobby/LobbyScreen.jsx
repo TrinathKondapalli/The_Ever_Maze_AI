@@ -34,11 +34,7 @@ export default function LobbyScreen() {
   const players = Object.values(room?.players || {});
   const teamA = players.filter(p => p.team === 'A');
   const teamB = players.filter(p => p.team === 'B');
-  const allReady = players.length >= 2 && players.every(p => p.isReady);
-
-  const handleReady = () => {
-    socket.emit(EVENTS.PLAYER_READY, {});
-  };
+  const isTeamsBalanced = teamA.length === teamB.length && teamA.length > 0;
 
   const handleSwitchTeam = (team) => {
     socket.emit(EVENTS.SWITCH_TEAM, { team });
@@ -175,21 +171,7 @@ export default function LobbyScreen() {
         </div>
 
         <div className="bg-slate-800 p-6 rounded-lg border border-slate-700 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleReady}
-              className={`px-8 py-4 rounded-lg font-bold text-lg transition-all ${
-                actualMyPlayer?.isReady
-                  ? 'bg-green-600 hover:bg-green-500 text-white shadow-[0_0_15px_rgba(22,163,74,0.5)]'
-                  : 'bg-slate-600 hover:bg-slate-500 text-white'
-              }`}
-            >
-              {actualMyPlayer?.isReady ? 'Ready!' : 'Click to Ready'}
-            </button>
-            <span className="text-slate-400">
-              {players.filter(p => p.isReady).length} / {players.length} Ready
-            </span>
-          </div>
+
 
           {isHost && (
             <div className="flex gap-4">
@@ -201,9 +183,9 @@ export default function LobbyScreen() {
               </button>
               <button
                 onClick={handleStartGame}
-                disabled={!allReady}
+                disabled={!isTeamsBalanced}
                 className={`px-10 py-4 rounded-lg font-bold text-xl transition-all ${
-                  allReady
+                  isTeamsBalanced
                     ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-900 shadow-[0_0_20px_rgba(6,182,212,0.6)]'
                     : 'bg-slate-700 text-slate-500 cursor-not-allowed'
                 }`}

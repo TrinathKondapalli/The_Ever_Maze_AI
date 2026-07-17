@@ -105,20 +105,6 @@ function registerHandlers(io, roomManager) {
       }
     });
 
-    socket.on(EVENTS.PLAYER_READY, (data, callback) => {
-      try {
-        const result = roomManager.toggleReady(socket.id);
-        if (result.success) {
-          if (typeof callback === 'function') callback({ success: true });
-          const roomCode = roomManager.socketToRoom.get(socket.id);
-          io.to(roomCode).emit(EVENTS.ROOM_UPDATE, { room: sanitizeRoomForBroadcast(result.data.room) });
-        } else {
-          if (typeof callback === 'function') callback({ success: false, error: result.error });
-        }
-      } catch (err) {
-        if (typeof callback === 'function') callback({ success: false, error: err.message });
-      }
-    });
 
     socket.on(EVENTS.SWITCH_TEAM, (data, callback) => {
       try {
