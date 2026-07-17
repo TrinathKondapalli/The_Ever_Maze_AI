@@ -1,32 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import socket from '../../socket/socket.js';
-import { useGameStore } from '../../hooks/useGameStore.js';
 import { gameStore } from '../../store/gameStore.js';
-import { EVENTS, PLAYER_COLORS } from '../../constants/index.js';
-import LandingPage from '../Landing/LandingPage';
+import { EVENTS } from '../../constants/index.js';
 
 export default function LandingScreen() {
-  const { preferredColor } = useGameStore();
-  const [name, setName] = useState(localStorage.getItem('playerName') || '');
-  const [colorIndex, setColorIndex] = useState(
-    Math.max(0, PLAYER_COLORS.indexOf(preferredColor))
-  );
+  const [name, setName] = useState('');
+  const [roomCode, setRoomCode] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    localStorage.setItem('preferredColor', PLAYER_COLORS[colorIndex]);
-    gameStore.setState({ preferredColor: PLAYER_COLORS[colorIndex] });
-  }, [colorIndex]);
-
-  useEffect(() => {
-    localStorage.setItem('playerName', name);
-  }, [name]);
-
-  const handleCreatePrivate = () => {
+  const handleCreate = () => {
     if (name.length < 2) return setError('Name must be at least 2 characters');
     setError(null);
-    socket.emit(EVENTS.CREATE_ROOM, { playerName: name, color: PLAYER_COLORS[colorIndex], settings: {} }, (res) => {
+    socket.emit(EVENTS.CREATE_ROOM, { playerName: name, settings: {} }, (res) => {
       if (res.success) {
         gameStore.setState({
           roomCode: res.roomCode,
@@ -40,11 +26,11 @@ export default function LandingScreen() {
     });
   };
 
-  const handlePlay = () => {
+  const handleJoin = () => {
     if (name.length < 2) return setError('Name must be at least 2 characters');
+    if (roomCode.length !== 6) return setError('Room code must be 6 characters');
     setError(null);
-    setIsJoining(true);
-    socket.emit('QUICK_JOIN', { playerName: name, color: PLAYER_COLORS[colorIndex] }, (res) => {
+    socket.emit(EVENTS.JOIN_ROOM, { roomCode, playerName: name }, (res) => {
       if (res.success) {
         gameStore.setState({
           roomCode: res.roomCode,
@@ -54,22 +40,74 @@ export default function LandingScreen() {
         });
       } else {
         setError(res.error);
-        setIsJoining(false);
       }
     });
   };
 
   return (
-    <LandingPage 
-      playerName={name}
-      onNameChange={setName}
-      selectedColorIndex={colorIndex}
-      onColorSelect={setColorIndex}
-      onPlay={handlePlay}
-      onCreateRoom={handleCreatePrivate}
-      isJoining={isJoining}
-      error={error}
-    />
+    <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-4">
+      <div className="bg-slate-800 p-8 rounded-xl shadow-2xl w-full max-w-md">
+        <h1 className="text-4xl font-bold text-center mb-8 text-cyan-400 tracking-wider">THE EVER MAZE</h1>
+        
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Player Name</label>
+            <input 
+              type="text" 
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              placeholder="Enter your name"
+              maxLength={20}
+            />
+          </div>
+
+          {error && <div className="text-red-400 text-sm bg-red-900/30 p-3 rounded">{error}</div>}
+
+          {!isJoining ? (
+            <div className="space-y-4">
+              <button 
+                onClick={handleCreate}
+                className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-4 rounded-lg transition-colors"
+              >
+                Create Room
+              </button>
+              <button 
+                onClick={() => setIsJoining(true)}
+                className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-4 rounded-lg transition-colors"
+              >
+                Join Existing Room
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4 animate-fadeIn">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Room Code</label>
+                <input 
+                  type="text" 
+                  value={roomCode}
+                  onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                  className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 uppercase tracking-widest"
+                  placeholder="6-CHARACTER CODE"
+                  maxLength={6}
+                />
+              </div>
+              <button 
+                onClick={handleJoin}
+                className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-4 rounded-lg transition-colors"
+              >
+                Join Room
+              </button>
+              <button 
+                onClick={() => setIsJoining(false)}
+                className="w-full text-slate-400 hover:text-white text-sm py-2"
+              >
+                Back
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
-

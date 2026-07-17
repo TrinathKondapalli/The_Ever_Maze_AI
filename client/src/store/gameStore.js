@@ -5,7 +5,6 @@ let state = {
   phase: 'landing', // 'landing', 'lobby', 'game'
   error: null,
   chatMessages: [],
-  preferredColor: localStorage.getItem('preferredColor') || '#06b6d4',
 };
 
 const listeners = new Set();
@@ -38,7 +37,6 @@ export const gameStore = {
       phase: 'landing',
       error: null,
       chatMessages: [],
-      preferredColor: state.preferredColor,
     };
     emit();
   }
