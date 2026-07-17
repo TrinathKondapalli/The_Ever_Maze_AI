@@ -59,7 +59,7 @@ export default function LandingScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4 font-sans bg-cover bg-center" style={{ backgroundImage: "url('/bg-fantasy.png')" }}>
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4 font-sans bg-cover bg-center" style={{ backgroundImage: "url('/BGimg.png')" }}>
       
       {/* Top Left Header */}
       <div className="absolute top-6 left-6 flex items-center gap-3 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-lg">
@@ -78,9 +78,8 @@ export default function LandingScreen() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-cyan-500/20 blur-[60px] rounded-full pointer-events-none" />
 
         <div className="text-center mb-10 relative z-10">
-          <h1 className="text-5xl md:text-6xl font-serif font-bold tracking-widest mb-3 bg-gradient-to-b from-white to-slate-400 bg-clip-text text-transparent drop-shadow-lg" style={{ fontFamily: 'Georgia, serif' }}>
-            THE<br/>
-            EVER MAZE
+          <h1 className="text-5xl md:text-7xl font-serif font-bold tracking-widest mb-3 bg-gradient-to-b from-white to-slate-400 bg-clip-text text-transparent drop-shadow-lg" style={{ fontFamily: 'Georgia, serif' }}>
+            LUMINA
           </h1>
           <div className="flex items-center justify-center gap-3 text-xs md:text-sm font-semibold tracking-[0.2em] text-[#d4af37]">
             <span>◆</span>
@@ -231,7 +230,7 @@ export default function LandingScreen() {
         <button className="bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 hover:bg-black/60 transition-colors flex items-center gap-2">
           <span className="text-cyan-400">◆</span> NEWS & UPDATES
         </button>
-        <div className="hidden sm:block">© 2024 The Ever Maze. All rights reserved.</div>
+        <div className="hidden sm:block">© 2024 Lumina. All rights reserved.</div>
         <button className="bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 hover:bg-black/60 transition-colors flex items-center gap-2">
           HOW TO PLAY <span className="text-cyan-400">›</span>
         </button>
