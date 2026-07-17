@@ -128,9 +128,9 @@ export default function GameScreen() {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     
-    // Internal resolution for retro 3D look
-    canvas.width = 640;
-    canvas.height = 360;
+    // Internal resolution for crisp isometric look
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
     let lastTime = performance.now();
 
