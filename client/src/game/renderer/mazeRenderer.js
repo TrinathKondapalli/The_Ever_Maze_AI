@@ -352,9 +352,8 @@ export function drawMaze(ctx, maze, width, height, player, allPlayers, myId, los
   updateAndRenderParticles(ctx, width, height, player, zBuffer);
 
   // -------------------------
-  // MINIMAP RENDERING
+  // MINIMAP RENDERING (Removed, handled by React component)
   // -------------------------
-  drawMinimap(ctx, maze, width, height, player, sprites, myPlayer);
 }
 
 function drawMinimap(ctx, maze, width, height, player, sprites, myPlayer) {

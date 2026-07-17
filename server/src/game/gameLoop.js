@@ -1,4 +1,4 @@
-const { GAME_CONFIG, EVENTS } = require('../../../shared/constants.js');
+const { GAME_CONFIG, EVENTS, TILE } = require('../../../shared/constants.js');
 const { updateBots } = require('./botAI.js');
 
 let loopTimer = null;
@@ -44,7 +44,7 @@ function startGameLoop(io, roomManager) {
                  const gift = match.gifts[i];
                  const dx = p.position.x - gift.position.x;
                  const dy = p.position.y - gift.position.y;
-                 if (Math.sqrt(dx * dx + dy * dy) < 0.8) {
+                 if (Math.sqrt(dx * dx + dy * dy) < 1.2) {
                     p.activeGift = gift.type;
                     match.gifts.splice(i, 1);
                     io.to(roomCode).emit(EVENTS.GIFT_PICKUP, { playerId, type: gift.type });
@@ -56,7 +56,7 @@ function startGameLoop(io, roomManager) {
         }
 
         // --- Sudden Death Logic ---
-        const { GAME_CONFIG, TILE } = require('../../../shared/constants.js');
+
         if (match.phase !== 'MATCH_END') {
            const matchTimeElapsed = now - match.startedAt;
            // Trigger sudden death at 5 minutes (300,000 ms) or whatever the match duration is
@@ -146,7 +146,7 @@ function startGameLoop(io, roomManager) {
             if (p.position && p.isConnected) {
               const dx = p.position.x - match.lostLight.position.x;
               const dy = p.position.y - match.lostLight.position.y;
-              if (Math.sqrt(dx * dx + dy * dy) < 0.8) {
+              if (Math.sqrt(dx * dx + dy * dy) < 1.2) {
                 match.lostLight.isOnFloor = false;
                 match.lostLight.carrierId = playerId;
                 match.lostLight.foundAt = now;

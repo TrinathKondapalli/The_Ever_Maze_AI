@@ -36,7 +36,7 @@ export default function GiftUI({ activeGift, onUseGift }) {
   }
 
   return (
-    <div className="absolute bottom-8 right-8 z-30 flex flex-col items-center">
+    <div className="absolute bottom-8 left-8 z-30 flex flex-col items-center">
       <button 
         onClick={onUseGift}
         className={`w-24 h-24 rounded-full bg-slate-900 border-4 flex flex-col items-center justify-center transition-transform hover:scale-105 active:scale-95 ${giftColor}`}

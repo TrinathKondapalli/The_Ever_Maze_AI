@@ -66,7 +66,7 @@ export default function ChatBox({ inGame = false }) {
   };
 
   const containerClasses = inGame
-    ? `absolute bottom-4 left-4 w-80 z-30 transition-opacity duration-300 rounded-xl flex flex-col pointer-events-auto ${isActive || isTyping ? 'opacity-100 bg-slate-900/90 border border-slate-600 shadow-2xl' : 'opacity-60 bg-slate-900/60 border border-slate-700/30'}`
+    ? `absolute bottom-4 right-4 w-80 z-30 transition-opacity duration-300 rounded-xl flex flex-col pointer-events-auto ${isActive || isTyping ? 'opacity-100 bg-slate-900/90 border border-slate-600 shadow-2xl' : 'opacity-60 bg-slate-900/60 border border-slate-700/30'}`
     : "w-full h-64 bg-slate-800 rounded-xl border border-slate-700 shadow-inner flex flex-col mt-6";
 
   return (
