@@ -1,6 +1,7 @@
 services:
   - type: web
     name: the-ever-maze
+    plan: free
     runtime: node
     buildCommand: npm install --prefix server && npm run build
     startCommand: npm start
