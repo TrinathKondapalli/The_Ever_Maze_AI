@@ -3,7 +3,7 @@ import socket from '../../socket/socket.js';
 import { useGameStore } from '../../hooks/useGameStore.js';
 import { gameStore } from '../../store/gameStore.js';
 import { EVENTS, PLAYER_COLORS, MAZE_TYPE } from '../../constants/index.js';
-import ChatBox from '../Chat/ChatBox.jsx';
+
 
 export default function LobbyScreen() {
   const { room, roomCode, error, profileId } = useGameStore();
@@ -221,9 +221,7 @@ export default function LobbyScreen() {
       </div>
 
       {/* Chat Box */}
-      <div className="absolute bottom-4 left-4 w-96 max-w-full">
-        <ChatBox inGame={false} />
-      </div>
+
     </div>
   );
 }
