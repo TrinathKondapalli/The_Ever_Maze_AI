@@ -18,7 +18,7 @@ function startGameLoop(io, roomManager) {
         const match = room.match;
 
         // Process Bot AI
-        updateBots(room, GAME_CONFIG.TICK_RATE / 1000);
+        updateBots(room, 20 / 1000); // 20 is TICK_RATE
 
         // --- Gift Logic ---
         // Clean up expired effects
