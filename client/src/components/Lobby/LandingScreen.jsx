@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import socket from '../../socket/socket.js';
 import { gameStore } from '../../store/gameStore.js';
 import { EVENTS } from '../../constants/index.js';
+import ProfileModal from './ProfileModal.jsx';
 
 export default function LandingScreen() {
   const [name, setName] = useState('');
@@ -12,7 +13,8 @@ export default function LandingScreen() {
   const handleCreate = () => {
     if (name.length < 2) return setError('Name must be at least 2 characters');
     setError(null);
-    socket.emit(EVENTS.CREATE_ROOM, { playerName: name, settings: {} }, (res) => {
+    const profileId = gameStore.getState().profileId;
+    socket.emit(EVENTS.CREATE_ROOM, { playerName: name, profileId, settings: {} }, (res) => {
       if (res.success) {
         gameStore.setState({
           roomCode: res.roomCode,
@@ -30,7 +32,8 @@ export default function LandingScreen() {
     if (name.length < 2) return setError('Name must be at least 2 characters');
     if (roomCode.length !== 6) return setError('Room code must be 6 characters');
     setError(null);
-    socket.emit(EVENTS.JOIN_ROOM, { roomCode, playerName: name }, (res) => {
+    const profileId = gameStore.getState().profileId;
+    socket.emit(EVENTS.JOIN_ROOM, { roomCode, playerName: name, profileId }, (res) => {
       if (res.success) {
         gameStore.setState({
           roomCode: res.roomCode,
@@ -44,8 +47,11 @@ export default function LandingScreen() {
     });
   };
 
+  const [showProfile, setShowProfile] = useState(false);
+
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-4">
+      {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
       <div className="bg-slate-800 p-8 rounded-xl shadow-2xl w-full max-w-md">
         <h1 className="text-4xl font-bold text-center mb-8 text-cyan-400 tracking-wider">THE EVER MAZE</h1>
         
@@ -77,6 +83,12 @@ export default function LandingScreen() {
                 className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-4 rounded-lg transition-colors"
               >
                 Join Existing Room
+              </button>
+              <button 
+                onClick={() => setShowProfile(true)}
+                className="w-full bg-transparent border border-slate-600 text-slate-300 hover:text-white hover:border-slate-400 font-bold py-3 px-4 rounded-lg transition-colors"
+              >
+                View Profile
               </button>
             </div>
           ) : (

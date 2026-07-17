@@ -18,12 +18,15 @@ export function usePlayerController(maze, initialPosition) {
   const joystickRef = useRef({ x: 0, y: 0 });
   const headBobRef = useRef({ timer: 0, offset: 0 });
 
-  // Network sync throttle
+  // Always sync position to server (even when standing still)
+  // so the server can check proximity for gifts and the lost light
   const lastSyncRef = useRef(0);
 
   useEffect(() => {
     if (initialPosition) {
       playerRef.current = { ...initialPosition };
+      // Send initial position immediately so server knows we spawned
+      socket.emit(EVENTS.PLAYER_MOVE, playerRef.current);
     }
   }, [initialPosition]);
 
@@ -68,7 +71,9 @@ export function usePlayerController(maze, initialPosition) {
     const p = playerRef.current;
     let moveSpeed = 4.0 * dt; 
     
-    if (myPlayer?.activeEffects?.FREEZE) {
+    if (myPlayer?.isSpectator) {
+       moveSpeed = 12.0 * dt; // Super fast spectator cam
+    } else if (myPlayer?.activeEffects?.FREEZE) {
        moveSpeed = 0; 
     } else {
        if (isCarrier) {
@@ -81,16 +86,17 @@ export function usePlayerController(maze, initialPosition) {
     const rotSpeed = 2.5 * dt;
 
     let moved = false;
+    const isSpectator = myPlayer?.isSpectator;
 
     // Keyboard Movement
     if (keys.current.w) {
-      if (maze[Math.floor(p.y)][Math.floor(p.x + p.dirX * moveSpeed)] !== TILE.WALL) p.x += p.dirX * moveSpeed;
-      if (maze[Math.floor(p.y + p.dirY * moveSpeed)][Math.floor(p.x)] !== TILE.WALL) p.y += p.dirY * moveSpeed;
+      if (isSpectator || maze[Math.floor(p.y)][Math.floor(p.x + p.dirX * moveSpeed)] !== TILE.WALL) p.x += p.dirX * moveSpeed;
+      if (isSpectator || maze[Math.floor(p.y + p.dirY * moveSpeed)][Math.floor(p.x)] !== TILE.WALL) p.y += p.dirY * moveSpeed;
       moved = true;
     }
     if (keys.current.s) {
-      if (maze[Math.floor(p.y)][Math.floor(p.x - p.dirX * moveSpeed)] !== TILE.WALL) p.x -= p.dirX * moveSpeed;
-      if (maze[Math.floor(p.y - p.dirY * moveSpeed)][Math.floor(p.x)] !== TILE.WALL) p.y -= p.dirY * moveSpeed;
+      if (isSpectator || maze[Math.floor(p.y)][Math.floor(p.x - p.dirX * moveSpeed)] !== TILE.WALL) p.x -= p.dirX * moveSpeed;
+      if (isSpectator || maze[Math.floor(p.y - p.dirY * moveSpeed)][Math.floor(p.x)] !== TILE.WALL) p.y -= p.dirY * moveSpeed;
       moved = true;
     }
     if (keys.current.a || keys.current.ArrowLeft) {
@@ -108,16 +114,16 @@ export function usePlayerController(maze, initialPosition) {
     
     if (jy !== 0) {
       const dir = -jy; // Joystick UP (negative Y) means Forward
-      if (maze[Math.floor(p.y)][Math.floor(p.x + p.dirX * moveSpeed * dir)] !== TILE.WALL) p.x += p.dirX * moveSpeed * dir;
-      if (maze[Math.floor(p.y + p.dirY * moveSpeed * dir)][Math.floor(p.x)] !== TILE.WALL) p.y += p.dirY * moveSpeed * dir;
+      if (isSpectator || maze[Math.floor(p.y)][Math.floor(p.x + p.dirX * moveSpeed * dir)] !== TILE.WALL) p.x += p.dirX * moveSpeed * dir;
+      if (isSpectator || maze[Math.floor(p.y + p.dirY * moveSpeed * dir)][Math.floor(p.x)] !== TILE.WALL) p.y += p.dirY * moveSpeed * dir;
       moved = true;
     }
     if (jx !== 0) {
       // Strafe vector is perpendicular to direction (dirY, -dirX)
       const strafeX = p.dirY;
       const strafeY = -p.dirX;
-      if (maze[Math.floor(p.y)][Math.floor(p.x + strafeX * moveSpeed * jx)] !== TILE.WALL) p.x += strafeX * moveSpeed * jx;
-      if (maze[Math.floor(p.y + strafeY * moveSpeed * jx)][Math.floor(p.x)] !== TILE.WALL) p.y += strafeY * moveSpeed * jx;
+      if (isSpectator || maze[Math.floor(p.y)][Math.floor(p.x + strafeX * moveSpeed * jx)] !== TILE.WALL) p.x += strafeX * moveSpeed * jx;
+      if (isSpectator || maze[Math.floor(p.y + strafeY * moveSpeed * jx)][Math.floor(p.x)] !== TILE.WALL) p.y += strafeY * moveSpeed * jx;
       moved = true;
     }
 
@@ -130,14 +136,14 @@ export function usePlayerController(maze, initialPosition) {
       headBobRef.current.offset *= 0.9;
     }
 
-    // Network Sync
+    // Network Sync — always send position, even when standing still
+    // so the server can check proximity for gifts and the lost light
     const now = Date.now();
-    if (moved) {
-      soundEngine.playFootstep();
-      if (now - lastSyncRef.current > 50) {
-        socket.emit(EVENTS.PLAYER_MOVE, p);
-        lastSyncRef.current = now;
-      }
+    const syncInterval = moved ? 50 : 200; // fast when moving, slow when still
+    if (now - lastSyncRef.current > syncInterval) {
+      if (moved) soundEngine.playFootstep();
+      socket.emit(EVENTS.PLAYER_MOVE, p);
+      lastSyncRef.current = now;
     }
 
     return p;

@@ -33,7 +33,8 @@ export default function Minimap({ maze, myPlayer, players, lostLight, myId }) {
     const py = myPlayer.position.y;
     
     // Radius of visibility in tiles
-    const radius = 6;
+    const hasCompass = myPlayer.activeEffects?.COMPASS;
+    const radius = hasCompass ? 15 : 6;
     
     // We want the player to be exactly in the center of the canvas.
     // So map coordinate (px, py) maps to canvas (size/2, size/2)

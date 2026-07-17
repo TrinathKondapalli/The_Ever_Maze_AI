@@ -3,14 +3,14 @@ import { gameStore } from '../store/gameStore.js';
 import { EVENTS } from '../constants/index.js';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? (import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin);
-const socket = io(SERVER_URL, { autoConnect: false });
+const socket = io(SERVER_URL, { autoConnect: true });
 
 socket.on('connect', () => {
   gameStore.setState({ error: null });
 });
 
 socket.on('disconnect', () => {
-  gameStore.setState({ error: 'Disconnected from server' });
+  gameStore.setState({ error: 'Disconnected from server. Click "Back to Home" to restart.' });
 });
 
 socket.on(EVENTS.ROOM_ERROR, (data) => {

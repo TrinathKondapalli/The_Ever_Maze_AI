@@ -1,10 +1,20 @@
+function getOrCreateProfileId() {
+  let pid = localStorage.getItem('profileId');
+  if (!pid) {
+    pid = 'prof_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('profileId', pid);
+  }
+  return pid;
+}
+
 let state = {
   roomCode: null,
   room: null,
   player: null,
   phase: 'landing', // 'landing', 'lobby', 'game'
   error: null,
-  chatMessages: []
+  chatMessages: [],
+  profileId: getOrCreateProfileId()
 };
 
 const listeners = new Set();
@@ -30,13 +40,15 @@ export const gameStore = {
     emit();
   },
   reset: () => {
+    const profileId = state.profileId;
     state = {
       roomCode: null,
       room: null,
       player: null,
       phase: 'landing',
       error: null,
-      chatMessages: []
+      chatMessages: [],
+      profileId
     };
     emit();
   }

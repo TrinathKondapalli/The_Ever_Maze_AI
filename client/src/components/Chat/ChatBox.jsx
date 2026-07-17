@@ -66,13 +66,13 @@ export default function ChatBox({ inGame = false }) {
   };
 
   const containerClasses = inGame
-    ? `absolute bottom-4 left-4 w-80 h-64 z-30 transition-opacity duration-500 rounded-xl flex flex-col pointer-events-auto ${isActive || isTyping ? 'opacity-100 bg-slate-900/80 shadow-lg border border-slate-700/50' : 'opacity-30 bg-transparent border-transparent'}`
+    ? `absolute bottom-4 left-4 w-80 z-30 transition-opacity duration-300 rounded-xl flex flex-col pointer-events-auto ${isActive || isTyping ? 'opacity-100 bg-slate-900/90 border border-slate-600 shadow-2xl' : 'opacity-60 bg-slate-900/60 border border-slate-700/30'}`
     : "w-full h-64 bg-slate-800 rounded-xl border border-slate-700 shadow-inner flex flex-col mt-6";
 
   return (
     <div className={containerClasses} onClick={() => { setIsTyping(true); inputRef.current?.focus(); }}>
       {/* Messages List */}
-      <div className={`flex-1 overflow-y-auto p-3 space-y-2 text-sm ${!inGame || isActive || isTyping ? 'block' : 'hidden'}`}>
+      <div className={`flex-1 overflow-y-auto p-3 space-y-2 text-sm max-h-40`}>
         {chatMessages.map((msg) => (
           <div key={msg.id} className="break-words">
             {msg.isSystem ? (
@@ -91,7 +91,7 @@ export default function ChatBox({ inGame = false }) {
       </div>
 
       {/* Input Field */}
-      <div className={`p-2 border-t border-slate-700/50 ${(inGame && !isTyping && !isActive) ? 'hidden' : 'block'}`}>
+      <div className="p-2 border-t border-slate-700/50">
         <input
           ref={inputRef}
           type="text"

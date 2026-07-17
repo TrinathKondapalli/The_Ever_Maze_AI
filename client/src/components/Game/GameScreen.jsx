@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../../hooks/useGameStore.js';
 import socket from '../../socket/socket.js';
-import { drawMaze } from '../../game/renderer/mazeRenderer.js';
+import { drawMaze, spawnExplosion, spawnGiftEffect } from '../../game/renderer/mazeRenderer.js';
 import { usePlayerController } from '../../hooks/usePlayerController.js';
 import { soundEngine } from '../../game/audio/soundEngine.js';
 import VirtualJoystick from './VirtualJoystick.jsx';
 import Minimap from './Minimap.jsx';
 import ChatBox from '../Chat/ChatBox.jsx';
+import GiftUI from './GiftUI.jsx';
+import { EVENTS } from '../../constants/index.js';
 
 export default function GameScreen() {
   const { room } = useGameStore();
@@ -19,8 +21,35 @@ export default function GameScreen() {
   const maze = room?.match?.maze;
   const players = room?.players || {};
   
-  // Find my initial spawn position from the server state
-  const myPlayer = players[socket.id];
+  useEffect(() => {
+    const onLightTransfer = (data) => {
+      // Find the player who was tagged (fromId) and spawn explosion
+      const taggedPlayer = players?.[data.fromId];
+      if (taggedPlayer && taggedPlayer.position) {
+         spawnExplosion(taggedPlayer.position.x, taggedPlayer.position.y, taggedPlayer.color || '#ff0000');
+      }
+    };
+
+    const onUseGift = (data) => {
+      // Find the player who used the gift and spawn effect
+      const user = players?.[data.playerId];
+      if (user && user.position) {
+         spawnGiftEffect(user.position.x, user.position.y, data.type);
+      }
+    };
+
+    socket.on(EVENTS.LIGHT_TRANSFER, onLightTransfer);
+    socket.on(EVENTS.USE_GIFT, onUseGift);
+
+    return () => {
+      socket.off(EVENTS.LIGHT_TRANSFER, onLightTransfer);
+      socket.off(EVENTS.USE_GIFT, onUseGift);
+    };
+  }, [players]);
+  
+  const { profileId } = useGameStore();
+  const myPlayer = Object.values(players).find(p => p.profileId === profileId) || players[socket.id];
+  const myActualSocketId = myPlayer ? Object.keys(players).find(key => players[key] === myPlayer) : socket.id;
   const initialPosition = myPlayer?.position;
 
   const { playerRef, keys, joystickRef, headBobRef, handleMouseMove, updateRotation, updateMovement } = usePlayerController(maze, initialPosition);
@@ -62,11 +91,11 @@ export default function GameScreen() {
     if (lightCarrier && lightCarrier !== prevLightCarrierRef.current) {
       if (prevLightCarrierRef.current) {
          soundEngine.playTag(); // Transferred from another player
-         if (lightCarrier === socket.id) setFlashEffect('pickup');
-         else if (prevLightCarrierRef.current === socket.id) setFlashEffect('damage');
+         if (lightCarrier === myActualSocketId) setFlashEffect('pickup');
+         else if (prevLightCarrierRef.current === myActualSocketId) setFlashEffect('damage');
       } else {
          soundEngine.playPickup(); // Picked up from floor
-         if (lightCarrier === socket.id) setFlashEffect('pickup');
+         if (lightCarrier === myActualSocketId) setFlashEffect('pickup');
       }
       setTimeout(() => setFlashEffect(null), 300);
     }
@@ -111,13 +140,13 @@ export default function GameScreen() {
       lastTime = time;
 
       // Check if I am carrying the light
-      const isCarrier = room?.match?.lostLight?.carrierId === socket.id;
+      const isCarrier = room?.match?.lostLight?.carrierId === myActualSocketId;
 
       // Update my position
       const p = updateMovement(dt, isCarrier, myPlayer);
       
       // Draw 3D world (walls + other players + light + gifts)
-      drawMaze(ctx, maze, canvas.width, canvas.height, p, playersRef.current, socket.id, room?.match?.lostLight, room?.match?.gifts, myPlayer, matchPhaseRef.current, headBobRef.current.offset);
+      drawMaze(ctx, maze, canvas.width, canvas.height, p, playersRef.current, myActualSocketId, room?.match?.lostLight, room?.match?.gifts, myPlayer, matchPhaseRef.current, headBobRef.current.offset);
       
       requestRef.current = requestAnimationFrame(renderFrame);
     };
@@ -127,12 +156,22 @@ export default function GameScreen() {
     return () => cancelAnimationFrame(requestRef.current);
   }, [maze, myPlayer]);
 
-  // E key for Gift usage
+  const handleUseGift = () => {
+    if (myPlayer?.activeGift) {
+      socket.emit('USE_GIFT');
+      // Optimistically clear the gift from UI to prevent double-presses
+      myPlayer.activeGift = null;
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = (e) => {
-       if (e.key.toLowerCase() === 'e') {
-          socket.emit('USE_GIFT');
-       }
+      if (e.code === 'Space') {
+        if (document.activeElement?.tagName !== 'INPUT') {
+          e.preventDefault();
+          handleUseGift();
+        }
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -142,7 +181,7 @@ export default function GameScreen() {
   let lightStatusMessage = "Find the Lost Light in the maze!";
   let lightStatusColor = "text-yellow-400";
   if (lostLight?.carrierId) {
-    if (lostLight.carrierId === socket.id) {
+    if (lostLight.carrierId === myActualSocketId) {
        lightStatusMessage = "YOU HAVE THE LIGHT! RUN TO THE EXIT!";
        lightStatusColor = "text-yellow-300 font-black animate-pulse";
     } else {
@@ -203,6 +242,12 @@ export default function GameScreen() {
             lostLight={room?.match?.lostLight} 
             myId={socket.id} 
           />
+        </div>
+      )}
+      
+      {myPlayer?.isSpectator && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-cyan-900/80 text-cyan-400 border border-cyan-500/50 px-6 py-2 rounded-full font-bold tracking-widest shadow-[0_0_15px_rgba(34,211,238,0.5)] z-40 animate-pulse">
+          SPECTATOR MODE
         </div>
       )}
 
@@ -345,6 +390,11 @@ export default function GameScreen() {
       {/* Global Chat Box */}
       {matchPhase !== 'MATCH_END' && (
         <ChatBox inGame={true} />
+      )}
+
+      {/* Gift UI */}
+      {matchPhase !== 'MATCH_END' && myPlayer?.activeGift && (
+        <GiftUI activeGift={myPlayer.activeGift} onUseGift={handleUseGift} />
       )}
     </div>
   );

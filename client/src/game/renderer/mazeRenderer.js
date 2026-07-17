@@ -1,5 +1,58 @@
 import { TILE, GAME_CONFIG } from '../../constants/index.js';
 
+const particles = [];
+
+export function spawnExplosion(x, y, colorStr) {
+  const count = 40;
+  const hex = colorStr.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 0.15 + 0.05;
+    particles.push({
+      x: x,
+      y: y,
+      z: Math.random() * 0.5, // height from floor (0 to 1)
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      vz: Math.random() * 0.1 + 0.05, // initial upward burst
+      life: 1.0,
+      decay: Math.random() * 0.03 + 0.02,
+      r, g, b,
+      size: Math.random() * 0.05 + 0.02
+    });
+  }
+}
+
+export function spawnGiftEffect(x, y, type) {
+  const count = 60;
+  let r = 255, g = 255, b = 255;
+  if (type === 'FREEZE') { r = 100; g = 200; b = 255; }
+  else if (type === 'DASH') { r = 255; g = 100; b = 100; }
+  else if (type === 'SHIELD') { r = 255; g = 200; b = 50; }
+  else if (type === 'COMPASS') { r = 100; g = 255; b = 100; }
+
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 0.2 + 0.1;
+    particles.push({
+      x: x,
+      y: y,
+      z: 0.5, 
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      vz: Math.random() * 0.05 - 0.02, 
+      life: 1.0,
+      decay: Math.random() * 0.02 + 0.01,
+      r, g, b,
+      size: Math.random() * 0.08 + 0.04
+    });
+  }
+}
+
 export function drawMaze(ctx, maze, width, height, player, allPlayers, myId, lostLight, gifts, myPlayer, matchPhase, headBobOffset = 0) {
   if (!maze || !player) return;
 
@@ -113,7 +166,7 @@ export function drawMaze(ctx, maze, width, height, player, allPlayers, myId, los
     if (drawEnd >= height) drawEnd = height - 1;
 
     // Fog of war: intensity based on distance
-    let maxDist = GAME_CONFIG.VISIBILITY_RADIUS;
+    let maxDist = myPlayer?.isSpectator ? 1000 : GAME_CONFIG.VISIBILITY_RADIUS;
     let intensity = 1.0 - (perpWallDist / maxDist);
     if (intensity < 0) intensity = 0;
     if (intensity > 1) intensity = 1;
@@ -174,6 +227,7 @@ export function drawMaze(ctx, maze, width, height, player, allPlayers, myId, los
            x: other.position.x,
            y: other.position.y,
            team: other.team,
+           color: other.color, // Include custom color
            isCarrier: lostLight?.carrierId === id
         });
       }
@@ -229,6 +283,14 @@ export function drawMaze(ctx, maze, width, height, player, allPlayers, myId, los
          
          if (sprite.isCarrier) {
            color = [253, 224, 71]; // yellow-300 if carrying light
+         } else if (sprite.color) {
+           // Parse hex color to RGB array
+           const hex = sprite.color.replace('#', '');
+           color = [
+             parseInt(hex.substring(0, 2), 16),
+             parseInt(hex.substring(2, 4), 16),
+             parseInt(hex.substring(4, 6), 16)
+           ];
          } else {
            color = sprite.team === 'A' ? [6, 182, 212] : [236, 72, 153];
          }
@@ -258,7 +320,7 @@ export function drawMaze(ctx, maze, width, height, player, allPlayers, myId, los
       let drawEndX = Math.floor(spriteWidth / 2 + spriteScreenX);
       if (drawEndX >= width) drawEndX = width - 1;
 
-      let maxDist = GAME_CONFIG.VISIBILITY_RADIUS;
+      let maxDist = myPlayer?.isSpectator ? 1000 : GAME_CONFIG.VISIBILITY_RADIUS;
       let intensity = 1.0 - (transformY / maxDist);
       if (intensity < 0) intensity = 0;
       if (intensity > 1) intensity = 1;
@@ -285,6 +347,11 @@ export function drawMaze(ctx, maze, width, height, player, allPlayers, myId, los
   }
 
   // -------------------------
+  // PARTICLE RENDERING
+  // -------------------------
+  updateAndRenderParticles(ctx, width, height, player, zBuffer);
+
+  // -------------------------
   // MINIMAP RENDERING
   // -------------------------
   drawMinimap(ctx, maze, width, height, player, sprites, myPlayer);
@@ -304,7 +371,7 @@ function drawMinimap(ctx, maze, width, height, player, sprites, myPlayer) {
   ctx.strokeRect(mapX, mapY, mapSize, mapSize);
 
   const tileSize = 8;
-  const radius = GAME_CONFIG.VISIBILITY_RADIUS;
+  const radius = myPlayer?.isSpectator ? 1000 : GAME_CONFIG.VISIBILITY_RADIUS;
   const hasCompass = myPlayer?.activeEffects?.COMPASS; // true if COMPASS active
 
   const pX = Math.floor(player.x);
@@ -315,8 +382,9 @@ function drawMinimap(ctx, maze, width, height, player, sprites, myPlayer) {
   const centerMapY = mapY + mapSize / 2;
 
   // Draw visible grid
-  for (let dy = -Math.ceil(radius); dy <= Math.ceil(radius); dy++) {
-    for (let dx = -Math.ceil(radius); dx <= Math.ceil(radius); dx++) {
+  const renderRadius = myPlayer?.isSpectator ? Math.max(maze.length, maze[0].length) : Math.ceil(radius);
+  for (let dy = -renderRadius; dy <= renderRadius; dy++) {
+    for (let dx = -renderRadius; dx <= renderRadius; dx++) {
       const gridY = pY + dy;
       const gridX = pX + dx;
       
@@ -338,7 +406,7 @@ function drawMinimap(ctx, maze, width, height, player, sprites, myPlayer) {
            continue;
         }
 
-        const alpha = Math.max(0, 1 - (dist / radius));
+        const alpha = myPlayer?.isSpectator ? 1 : Math.max(0, 1 - (dist / radius));
 
         if (tile === TILE.WALL) {
           ctx.fillStyle = `rgba(94, 114, 138, ${alpha})`;
@@ -421,4 +489,61 @@ function drawMinimap(ctx, maze, width, height, player, sprites, myPlayer) {
   ctx.strokeStyle = '#22d3ee'; // cyan-400
   ctx.lineWidth = 1.5;
   ctx.stroke();
+}
+
+function updateAndRenderParticles(ctx, width, height, player, zBuffer) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    
+    // Physics update
+    p.x += p.vx;
+    p.y += p.vy;
+    p.z += p.vz;
+    p.vz -= 0.01; // gravity
+    
+    // Floor collision
+    if (p.z < 0) {
+      p.z = 0;
+      p.vz *= -0.3; // bounce
+      p.vx *= 0.8;  // friction
+      p.vy *= 0.8;
+    }
+    
+    p.life -= p.decay;
+    if (p.life <= 0) {
+      particles.splice(i, 1);
+      continue;
+    }
+
+    // 3D Projection
+    const spriteX = p.x - player.x;
+    const spriteY = p.y - player.y;
+
+    const invDet = 1.0 / (player.planeX * player.dirY - player.dirX * player.planeY);
+    const transformX = invDet * (player.dirY * spriteX - player.dirX * spriteY);
+    const transformY = invDet * (-player.planeY * spriteX + player.planeX * spriteY);
+
+    if (transformY > 0) {
+      const spriteScreenX = Math.floor((width / 2) * (1 + transformX / transformY));
+      const wallHeight = Math.abs(Math.floor(height / transformY));
+      
+      // Calculate drawing dimensions based on z (height from floor)
+      const particleSize = Math.max(1, Math.floor(wallHeight * p.size));
+      const floorY = height / 2 + wallHeight / 2;
+      const screenY = floorY - (wallHeight * p.z) - particleSize;
+      
+      // Only draw if within screen and Z-Buffer
+      if (screenY >= 0 && screenY < height && spriteScreenX >= 0 && spriteScreenX < width) {
+        if (transformY < zBuffer[spriteScreenX]) {
+          // Dim based on distance and life
+          const maxDist = player.isSpectator ? 1000 : GAME_CONFIG.VISIBILITY_RADIUS;
+          let intensity = 1.0 - (transformY / maxDist);
+          if (intensity < 0) intensity = 0;
+          
+          ctx.fillStyle = `rgba(${p.r}, ${p.g}, ${p.b}, ${p.life * intensity})`;
+          ctx.fillRect(spriteScreenX - particleSize/2, screenY, particleSize, particleSize);
+        }
+      }
+    }
+  }
 }

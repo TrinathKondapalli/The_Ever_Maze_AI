@@ -28,15 +28,25 @@ function registerHandlers(io, roomManager) {
 
     socket.on(EVENTS.CREATE_ROOM, (data, callback) => {
       try {
-        const result = roomManager.createRoom(socket.id, data.playerName, data.settings);
+        const { playerName, settings, profileId } = data;
+        if (!playerName || playerName.length < 2) {
+          throw new Error('Name must be at least 2 characters');
+        }
+        
+        const result = roomManager.createRoom(socket.id, playerName, settings);
         if (result.success) {
           socket.join(result.data.roomCode);
+          if (profileId) {
+             const profiles = require('../data/profiles.js');
+             profiles.updateProfileName(profileId, playerName);
+             roomManager.rooms.get(result.data.roomCode).players[socket.id].profileId = profileId;
+          }
           if (typeof callback === 'function') {
-            callback({ 
-              success: true, 
-              roomCode: result.data.roomCode, 
-              player: sanitizePlayer(result.data.player), 
-              room: sanitizeRoomForBroadcast(result.data.room) 
+            callback({
+              success: true,
+              roomCode: result.data.roomCode,
+              room: sanitizeRoomForBroadcast(result.data.room),
+              player: result.data.room.players[socket.id]
             });
           }
         } else {
@@ -49,9 +59,17 @@ function registerHandlers(io, roomManager) {
 
     socket.on(EVENTS.JOIN_ROOM, (data, callback) => {
       try {
-        const result = roomManager.joinRoom(socket.id, data.roomCode, data.playerName);
+        const { roomCode, playerName, profileId } = data;
+        const result = roomManager.joinRoom(socket.id, roomCode, playerName);
         if (result.success) {
           socket.join(result.data.roomCode);
+          
+          if (profileId) {
+             const profiles = require('../data/profiles.js');
+             profiles.updateProfileName(profileId, playerName);
+             roomManager.rooms.get(result.data.roomCode).players[socket.id].profileId = profileId;
+          }
+
           if (typeof callback === 'function') {
             callback({ 
               success: true, 
@@ -64,10 +82,20 @@ function registerHandlers(io, roomManager) {
             player: sanitizePlayer(result.data.player),
             room: sanitizeRoomForBroadcast(result.data.room)
           });
-          broadcastSystemMessage(io, result.data.roomCode, `${data.playerName} has joined the room.`);
+          broadcastSystemMessage(io, result.data.roomCode, `${playerName} has joined the room.`);
         } else {
           if (typeof callback === 'function') callback({ success: false, error: result.error });
         }
+      } catch (err) {
+        if (typeof callback === 'function') callback({ success: false, error: err.message });
+      }
+    });
+
+    socket.on(EVENTS.GET_PROFILE, (data, callback) => {
+      try {
+        const profiles = require('../data/profiles.js');
+        const p = profiles.getProfile(data.profileId);
+        if (typeof callback === 'function') callback({ success: true, profile: p });
       } catch (err) {
         if (typeof callback === 'function') callback({ success: false, error: err.message });
       }
@@ -114,6 +142,36 @@ function registerHandlers(io, roomManager) {
     socket.on(EVENTS.SWITCH_TEAM, (data, callback) => {
       try {
         const result = roomManager.switchTeam(socket.id, data.team);
+        if (result.success) {
+          if (typeof callback === 'function') callback({ success: true });
+          const roomCode = roomManager.socketToRoom.get(socket.id);
+          io.to(roomCode).emit(EVENTS.ROOM_UPDATE, { room: sanitizeRoomForBroadcast(result.data.room) });
+        } else {
+          if (typeof callback === 'function') callback({ success: false, error: result.error });
+        }
+      } catch (err) {
+        if (typeof callback === 'function') callback({ success: false, error: err.message });
+      }
+    });
+
+    socket.on(EVENTS.CHANGE_COLOR, (data, callback) => {
+      try {
+        const result = roomManager.changeColor(socket.id, data.color);
+        if (result.success) {
+          if (typeof callback === 'function') callback({ success: true });
+          const roomCode = roomManager.socketToRoom.get(socket.id);
+          io.to(roomCode).emit(EVENTS.ROOM_UPDATE, { room: sanitizeRoomForBroadcast(result.data.room) });
+        } else {
+          if (typeof callback === 'function') callback({ success: false, error: result.error });
+        }
+      } catch (err) {
+        if (typeof callback === 'function') callback({ success: false, error: err.message });
+      }
+    });
+
+    socket.on(EVENTS.CHANGE_MAZE_TYPE, (data, callback) => {
+      try {
+        const result = roomManager.changeMazeType(socket.id, data.type);
         if (result.success) {
           if (typeof callback === 'function') callback({ success: true });
           const roomCode = roomManager.socketToRoom.get(socket.id);

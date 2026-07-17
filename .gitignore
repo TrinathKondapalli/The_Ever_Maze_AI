@@ -6,3 +6,9 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Don't commit profile data - server creates this at runtime
+data/*.json
+
+# Test scripts
+test_*.js

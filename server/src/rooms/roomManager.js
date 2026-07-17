@@ -1,6 +1,10 @@
 const { generateRoomCode, generatePlayerId, now } = require('../utils/helpers.js');
 const { createRoom, wouldImbalance, findNextHost } = require('./roomState.js');
-const { GAME_CONFIG, TEAM } = require('../../../shared/constants.js');
+const { GAME_CONFIG, TEAM, PLAYER_COLORS } = require('../../../shared/constants.js');
+
+function getRandomColor() {
+  return PLAYER_COLORS[Math.floor(Math.random() * PLAYER_COLORS.length)];
+}
 
 class RoomManager {
   constructor() {
@@ -51,7 +55,7 @@ class RoomManager {
       return { success: false, error: 'Room not found' };
     }
     if (room.status !== 'lobby') {
-      return { success: false, error: 'Match already in progress' };
+      // return { success: false, error: 'Match already in progress' };
     }
     if (Object.keys(room.players).length >= 14) {
       return { success: false, error: 'Room is full' };
@@ -68,13 +72,15 @@ class RoomManager {
     }
     
     const assignedTeam = teamCountA <= teamCountB ? TEAM.A : TEAM.B;
+    const isSpectator = room.status !== 'lobby';
 
     const newPlayer = {
       id: generatePlayerId(),
       socketId,
       name: playerName,
       team: assignedTeam,
-      isReady: false,
+      color: getRandomColor(),
+      isReady: isSpectator ? true : false,
       isHost: false,
       isConnected: true,
       disconnectedAt: null,
@@ -82,7 +88,8 @@ class RoomManager {
       gift: null,
       hasPickupImmunity: false,
       isAfk: false,
-      afkTimerId: null
+      afkTimerId: null,
+      isSpectator
     };
 
     room.players[socketId] = newPlayer;
@@ -112,6 +119,7 @@ class RoomManager {
       socketId: botSocketId,
       name: 'Bot ' + Math.floor(Math.random() * 1000),
       team: assignedTeam,
+      color: getRandomColor(),
       isReady: true, // Bots are always ready
       isHost: false,
       isConnected: true,
@@ -225,6 +233,29 @@ class RoomManager {
     }
 
     player.team = team;
+    return { success: true, data: { room } };
+  }
+
+  changeColor(socketId, color) {
+    const code = this.socketToRoom.get(socketId);
+    if (!code) return { success: false, error: 'Not in a room' };
+    const room = this.rooms.get(code);
+    if (room.status !== 'lobby') return { success: false, error: 'Cannot change color now' };
+    
+    if (!PLAYER_COLORS.includes(color)) return { success: false, error: 'Invalid color' };
+
+    room.players[socketId].color = color;
+    return { success: true, data: { room } };
+  }
+
+  changeMazeType(socketId, type) {
+    const code = this.socketToRoom.get(socketId);
+    if (!code) return { success: false, error: 'Not in a room' };
+    const room = this.rooms.get(code);
+    if (room.hostId !== socketId) return { success: false, error: 'Only host can change maze type' };
+    if (room.status !== 'lobby') return { success: false, error: 'Cannot change settings now' };
+    
+    room.settings.mazeType = type;
     return { success: true, data: { room } };
   }
 

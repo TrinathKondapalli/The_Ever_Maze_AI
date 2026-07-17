@@ -31,6 +31,7 @@ const EVENTS = {
   SWITCH_TEAM: 'SWITCH_TEAM',
   KICK_PLAYER: 'KICK_PLAYER',
   RETURN_TO_LOBBY: 'RETURN_TO_LOBBY',
+  GET_PROFILE: 'GET_PROFILE'
 };
 
 const GAME_CONFIG = {
@@ -76,11 +77,34 @@ const GIFT = {
   SILENT_STEPS: 'SILENT_STEPS'
 };
 
+const PLAYER_COLORS = [
+  '#06b6d4', // Cyan
+  '#f472b6', // Pink
+  '#4ade80', // Green
+  '#facc15', // Yellow
+  '#f87171', // Red
+  '#c084fc', // Purple
+  '#fb923c', // Orange
+  '#ffffff', // White
+];
+
+const MAZE_TYPE = {
+  STANDARD: 'STANDARD',
+  CAVE: 'CAVE',
+  ARENA: 'ARENA'
+};
+
 module.exports = {
-  EVENTS: Object.freeze(EVENTS),
+  EVENTS: Object.freeze({
+    ...EVENTS,
+    CHANGE_COLOR: 'CHANGE_COLOR',
+    CHANGE_MAZE_TYPE: 'CHANGE_MAZE_TYPE'
+  }),
   GAME_CONFIG: Object.freeze(GAME_CONFIG),
   TILE: Object.freeze(TILE),
   PHASE: Object.freeze(PHASE),
   TEAM: Object.freeze(TEAM),
   GIFT: Object.freeze(GIFT),
+  PLAYER_COLORS: Object.freeze(PLAYER_COLORS),
+  MAZE_TYPE: Object.freeze(MAZE_TYPE),
 };

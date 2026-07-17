@@ -35,9 +35,10 @@ function startGameLoop(io, roomManager) {
 
         // Check for Gift Pickup
         if (match.gifts && match.gifts.length > 0) {
-           for (const playerId in room.players) {
-             const p = room.players[playerId];
-             if (p.position && p.isConnected && !p.activeGift) {
+             for (const playerId in room.players) {
+               const p = room.players[playerId];
+               if (p.isSpectator) continue;
+               if (p.position && p.isConnected && !p.activeGift) {
                // Find closest gift
                for (let i = 0; i < match.gifts.length; i++) {
                  const gift = match.gifts[i];
@@ -75,6 +76,16 @@ function startGameLoop(io, roomManager) {
                  } else {
                     match.result = { winnerTeam: 'DRAW', reason: 'sudden_death_timeout' };
                  }
+
+                 const profiles = require('../data/profiles.js');
+                 for (const pid in room.players) {
+                   const p = room.players[pid];
+                   if (p.profileId) profiles.incrementStat(p.profileId, 'totalGames', 1);
+                   if (match.result.winnerTeam !== 'DRAW' && p.team === match.result.winnerTeam && p.profileId) {
+                     profiles.incrementStat(p.profileId, 'totalWins', 1);
+                   }
+                 }
+                 
                  io.to(roomCode).emit(EVENTS.MATCH_END, match.result);
               }
            }
@@ -131,6 +142,7 @@ function startGameLoop(io, roomManager) {
           // Check for pickup
           for (const playerId in room.players) {
             const p = room.players[playerId];
+            if (p.isSpectator) continue;
             if (p.position && p.isConnected) {
               const dx = p.position.x - match.lostLight.position.x;
               const dy = p.position.y - match.lostLight.position.y;
@@ -160,6 +172,7 @@ function startGameLoop(io, roomManager) {
             for (const playerId in room.players) {
               if (playerId === carrierId) continue;
               const p = room.players[playerId];
+              if (p.isSpectator) continue;
               if (p.position && p.team !== carrier.team && p.isConnected) {
                 const dx = p.position.x - carrier.position.x;
                 const dy = p.position.y - carrier.position.y;
@@ -168,6 +181,12 @@ function startGameLoop(io, roomManager) {
                   match.lostLight.carrierId = playerId;
                   match.lostLight.transferCount++;
                   match.lostLight.pickupImmunityUntil = now + GAME_CONFIG.PICKUP_IMMUNITY;
+                  
+                  if (p.profileId) {
+                    const profiles = require('../data/profiles.js');
+                    profiles.incrementStat(p.profileId, 'totalTags', 1);
+                  }
+                  
                   io.to(roomCode).emit(EVENTS.LIGHT_TRANSFER, { fromId: carrierId, toId: playerId, toName: p.name });
                   break;
                 }
@@ -205,6 +224,19 @@ function startGameLoop(io, roomManager) {
                        room.status = 'finished';
                        match.phase = 'MATCH_END';
                        match.result = { winnerTeam: carrier.team, reason: 'channel_complete', mvpId: carrierId };
+                       
+                       const profiles = require('../data/profiles.js');
+                       for (const pid in room.players) {
+                         const p = room.players[pid];
+                         if (p.profileId) profiles.incrementStat(p.profileId, 'totalGames', 1);
+                         if (p.team === carrier.team && p.profileId) {
+                           profiles.incrementStat(p.profileId, 'totalWins', 1);
+                         }
+                       }
+                       if (carrier.profileId) {
+                         profiles.incrementStat(carrier.profileId, 'totalEscapes', 1);
+                       }
+                       
                        io.to(roomCode).emit(EVENTS.MATCH_END, match.result);
                     }
                  }

@@ -11,6 +11,7 @@ function createRoom(hostSocketId, hostName, settings = {}) {
         socketId: hostSocketId,
         name: hostName,
         team: null,
+        color: '#06b6d4', // Default to Cyan
         isReady: false,
         isHost: true,
         isConnected: true,
@@ -19,12 +20,14 @@ function createRoom(hostSocketId, hostName, settings = {}) {
         gift: null,
         hasPickupImmunity: false,
         isAfk: false,
-        afkTimerId: null
+        afkTimerId: null,
+        isSpectator: false
       }
     },
     settings: {
       matchDuration: settings.matchDuration || 300000,
       mazeSize: settings.mazeSize || 31,
+      mazeType: settings.mazeType || 'STANDARD',
       giftFrequency: settings.giftFrequency || 60000,
       wallShifts: settings.wallShifts !== undefined ? settings.wallShifts : 3
     },

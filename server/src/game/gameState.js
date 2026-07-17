@@ -7,9 +7,10 @@ function createMatchState(room) {
   let maze = null;
   let isValid = false;
   const size = room.settings.mazeSize || 31;
+  const type = room.settings.mazeType || 'STANDARD';
 
   while (!isValid) {
-    maze = generateMaze(size);
+    maze = generateMaze(size, type);
     isValid = validateMaze(maze);
   }
 
