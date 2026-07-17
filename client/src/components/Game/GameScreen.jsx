@@ -47,9 +47,8 @@ export default function GameScreen() {
     };
   }, [players]);
   
-  const { profileId } = useGameStore();
-  const myPlayer = Object.values(players).find(p => p.profileId === profileId) || players[socket.id];
-  const myActualSocketId = myPlayer ? Object.keys(players).find(key => players[key] === myPlayer) : socket.id;
+  const myPlayer = players[socket.id];
+  const myActualSocketId = socket.id;
   const initialPosition = myPlayer?.position;
 
   const { playerRef, keys, joystickRef, headBobRef, handleMouseMove, updateRotation, updateMovement } = usePlayerController(maze, initialPosition);

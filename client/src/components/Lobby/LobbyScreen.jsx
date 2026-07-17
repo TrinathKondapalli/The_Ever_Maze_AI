@@ -6,7 +6,7 @@ import { EVENTS, PLAYER_COLORS, MAZE_TYPE } from '../../constants/index.js';
 
 
 export default function LobbyScreen() {
-  const { room, roomCode, error, profileId } = useGameStore();
+  const { room, roomCode, error } = useGameStore();
 
   const handleLeave = () => {
     socket.emit(EVENTS.LEAVE_ROOM, {});
@@ -28,7 +28,7 @@ export default function LobbyScreen() {
     );
   }
 
-  const actualMyPlayer = Object.values(room?.players || {}).find(p => p.profileId === profileId) || room?.players?.[socket.id];
+  const actualMyPlayer = room?.players?.[socket.id];
   const isHost = actualMyPlayer?.isHost;
 
   const players = Object.values(room?.players || {});

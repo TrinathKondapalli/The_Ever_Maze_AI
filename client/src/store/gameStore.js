@@ -30,7 +30,6 @@ export const gameStore = {
     emit();
   },
   reset: () => {
-    const profileId = state.profileId;
     state = {
       roomCode: null,
       room: null,
@@ -38,7 +37,6 @@ export const gameStore = {
       phase: 'landing',
       error: null,
       chatMessages: [],
-      profileId
     };
     emit();
   }
