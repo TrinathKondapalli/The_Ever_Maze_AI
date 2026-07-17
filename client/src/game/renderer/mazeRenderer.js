@@ -75,6 +75,17 @@ export function drawMaze(ctx, maze, width, height, player, allPlayers, myId, los
 
   const { x, y, dirX, dirY, planeX, planeY } = player;
   
+  // 3rd Person Camera Calculation
+  const cameraDist = 1.2;
+  let camX = x - dirX * cameraDist;
+  let camY = y - dirY * cameraDist;
+  
+  // Prevent camera from clipping through walls behind the player
+  if (maze[Math.floor(camY)] && maze[Math.floor(camY)][Math.floor(camX)] === TILE.WALL) {
+     camX = x - dirX * 0.2;
+     camY = y - dirY * 0.2;
+  }
+  
   // Z-Buffer for sprite occlusion
   const zBuffer = new Array(width);
 
@@ -86,8 +97,8 @@ export function drawMaze(ctx, maze, width, height, player, allPlayers, myId, los
     let rayDirY = dirY + planeY * cameraX;
 
     // which box of the map we're in
-    let mapX = Math.floor(x);
-    let mapY = Math.floor(y);
+    let mapX = Math.floor(camX);
+    let mapY = Math.floor(camY);
 
     // length of ray from current position to next x or y-side
     let sideDistX;
@@ -108,17 +119,17 @@ export function drawMaze(ctx, maze, width, height, player, allPlayers, myId, los
     // calculate step and initial sideDist
     if (rayDirX < 0) {
       stepX = -1;
-      sideDistX = (x - mapX) * deltaDistX;
+      sideDistX = (camX - mapX) * deltaDistX;
     } else {
       stepX = 1;
-      sideDistX = (mapX + 1.0 - x) * deltaDistX;
+      sideDistX = (mapX + 1.0 - camX) * deltaDistX;
     }
     if (rayDirY < 0) {
       stepY = -1;
-      sideDistY = (y - mapY) * deltaDistY;
+      sideDistY = (camY - mapY) * deltaDistY;
     } else {
       stepY = 1;
-      sideDistY = (mapY + 1.0 - y) * deltaDistY;
+      sideDistY = (mapY + 1.0 - camY) * deltaDistY;
     }
 
     // perform DDA
@@ -219,7 +230,6 @@ export function drawMaze(ctx, maze, width, height, player, allPlayers, myId, los
   
   if (allPlayers && myId) {
     for (const id in allPlayers) {
-      if (id === myId) continue;
       const other = allPlayers[id];
       if (other.position) {
         sprites.push({
@@ -254,15 +264,15 @@ export function drawMaze(ctx, maze, width, height, player, allPlayers, myId, los
 
   // Sort sprites from far to close
   sprites.forEach(sprite => {
-    sprite.distance = ((x - sprite.x) * (x - sprite.x) + (y - sprite.y) * (y - sprite.y));
+    sprite.distance = ((camX - sprite.x) * (camX - sprite.x) + (camY - sprite.y) * (camY - sprite.y));
   });
   sprites.sort((a, b) => b.distance - a.distance);
 
   // Project and draw sprites
   for (let i = 0; i < sprites.length; i++) {
     const sprite = sprites[i];
-    const spriteX = sprite.x - x;
-    const spriteY = sprite.y - y;
+    const spriteX = sprite.x - camX;
+    const spriteY = sprite.y - camY;
 
     const invDet = 1.0 / (planeX * dirY - dirX * planeY);
     const transformX = invDet * (dirY * spriteX - dirX * spriteY);
