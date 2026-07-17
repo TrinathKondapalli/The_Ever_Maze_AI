@@ -59,7 +59,7 @@ export default function LandingScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4 font-sans bg-cover bg-center" style={{ backgroundImage: "url('/BGimg.png')" }}>
+    <div className="min-h-[100dvh] bg-black text-white flex flex-col items-center justify-between p-4 font-sans bg-cover bg-center" style={{ backgroundImage: "url('/BGimg.png')" }}>
       
       {/* Top Left Header */}
       <div className="absolute top-6 left-6 flex items-center gap-3 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-lg">
@@ -72,19 +72,19 @@ export default function LandingScreen() {
       </div>
 
       {/* Main Glass Panel */}
-      <div className="bg-[#0b1320]/80 backdrop-blur-xl border border-cyan-500/30 p-10 rounded-[2rem] shadow-[0_0_50px_rgba(6,182,212,0.15)] w-full max-w-2xl relative overflow-hidden">
+      <div className="bg-[#0b1320]/80 backdrop-blur-xl border border-cyan-500/30 p-6 sm:p-8 rounded-[2rem] shadow-[0_0_50px_rgba(6,182,212,0.15)] w-full max-w-xl relative overflow-hidden my-auto mt-20 sm:mt-auto">
         
         {/* Subtle glow behind title */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-cyan-500/20 blur-[60px] rounded-full pointer-events-none" />
 
-        <div className="text-center mb-10 relative z-10">
-          <h1 className="text-5xl md:text-7xl font-serif font-bold tracking-widest mb-3 bg-gradient-to-b from-white to-slate-400 bg-clip-text text-transparent drop-shadow-lg" style={{ fontFamily: 'Georgia, serif' }}>
+        <div className="text-center mb-8 relative z-10">
+          <h1 className="text-4xl md:text-6xl font-serif font-bold tracking-widest mb-2 bg-gradient-to-b from-white to-slate-400 bg-clip-text text-transparent drop-shadow-lg" style={{ fontFamily: 'Georgia, serif' }}>
             LUMINA
           </h1>
-          <div className="flex items-center justify-center gap-3 text-xs md:text-sm font-semibold tracking-[0.2em] text-[#d4af37]">
-            <span>◆</span>
-            <span>TWO TEAMS. ONE MAGICAL LIGHT. ESCAPE TOGETHER.</span>
-            <span>◆</span>
+          <div className="flex items-center justify-center gap-2 md:gap-3 text-[9px] md:text-xs font-semibold tracking-[0.2em] text-[#d4af37] text-center px-4">
+            <span className="hidden sm:inline">◆</span>
+            <span>SEEK THE LIGHT. ESCAPE THE DARKNESS. TOGETHER.</span>
+            <span className="hidden sm:inline">◆</span>
           </div>
         </div>
         
@@ -226,11 +226,11 @@ export default function LandingScreen() {
       </div>
       
       {/* Bottom Footer Elements */}
-      <div className="absolute bottom-6 left-6 right-6 flex justify-between items-center text-xs font-semibold tracking-wider text-slate-400">
+      <div className="w-full flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-semibold tracking-wider text-slate-400 mt-4 px-2 sm:px-6 z-10 relative">
         <button className="bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 hover:bg-black/60 transition-colors flex items-center gap-2">
           <span className="text-cyan-400">◆</span> NEWS & UPDATES
         </button>
-        <div className="hidden sm:block">© 2024 Lumina. All rights reserved.</div>
+        <div className="text-center text-[10px] sm:text-xs">© 2024 Lumina. All rights reserved.</div>
         <button className="bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 hover:bg-black/60 transition-colors flex items-center gap-2">
           HOW TO PLAY <span className="text-cyan-400">›</span>
         </button>
