@@ -50,11 +50,11 @@ socket.on(EVENTS.STATE_UPDATE, (data) => {
       room: {
         ...currentState.room,
         players: data.players,
-        match: {
-          ...currentState.room.match,
+        match: data.match ? {
+          ...(currentState.room.match || {}),
           ...data.match,
-          maze: currentState.room.match.maze // preserve maze
-        }
+          maze: currentState.room.match?.maze // safely preserve maze
+        } : currentState.room.match
       }
     });
   }

@@ -77,15 +77,6 @@ function startGameLoop(io, roomManager) {
                     match.result = { winnerTeam: 'DRAW', reason: 'sudden_death_timeout' };
                  }
 
-                 const profiles = require('../data/profiles.js');
-                 for (const pid in room.players) {
-                   const p = room.players[pid];
-                   if (p.profileId) profiles.incrementStat(p.profileId, 'totalGames', 1);
-                   if (match.result.winnerTeam !== 'DRAW' && p.team === match.result.winnerTeam && p.profileId) {
-                     profiles.incrementStat(p.profileId, 'totalWins', 1);
-                   }
-                 }
-                 
                  io.to(roomCode).emit(EVENTS.MATCH_END, match.result);
               }
            }
@@ -182,11 +173,6 @@ function startGameLoop(io, roomManager) {
                   match.lostLight.transferCount++;
                   match.lostLight.pickupImmunityUntil = now + GAME_CONFIG.PICKUP_IMMUNITY;
                   
-                  if (p.profileId) {
-                    const profiles = require('../data/profiles.js');
-                    profiles.incrementStat(p.profileId, 'totalTags', 1);
-                  }
-                  
                   io.to(roomCode).emit(EVENTS.LIGHT_TRANSFER, { fromId: carrierId, toId: playerId, toName: p.name });
                   break;
                 }
@@ -224,18 +210,6 @@ function startGameLoop(io, roomManager) {
                        room.status = 'finished';
                        match.phase = 'MATCH_END';
                        match.result = { winnerTeam: carrier.team, reason: 'channel_complete', mvpId: carrierId };
-                       
-                       const profiles = require('../data/profiles.js');
-                       for (const pid in room.players) {
-                         const p = room.players[pid];
-                         if (p.profileId) profiles.incrementStat(p.profileId, 'totalGames', 1);
-                         if (p.team === carrier.team && p.profileId) {
-                           profiles.incrementStat(p.profileId, 'totalWins', 1);
-                         }
-                       }
-                       if (carrier.profileId) {
-                         profiles.incrementStat(carrier.profileId, 'totalEscapes', 1);
-                       }
                        
                        io.to(roomCode).emit(EVENTS.MATCH_END, match.result);
                     }

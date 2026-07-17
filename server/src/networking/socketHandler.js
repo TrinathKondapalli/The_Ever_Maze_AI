@@ -36,11 +36,6 @@ function registerHandlers(io, roomManager) {
         const result = roomManager.createRoom(socket.id, playerName, settings);
         if (result.success) {
           socket.join(result.data.roomCode);
-          if (profileId) {
-             const profiles = require('../data/profiles.js');
-             profiles.updateProfileName(profileId, playerName);
-             roomManager.rooms.get(result.data.roomCode).players[socket.id].profileId = profileId;
-          }
           if (typeof callback === 'function') {
             callback({
               success: true,
@@ -63,12 +58,6 @@ function registerHandlers(io, roomManager) {
         const result = roomManager.joinRoom(socket.id, roomCode, playerName);
         if (result.success) {
           socket.join(result.data.roomCode);
-          
-          if (profileId) {
-             const profiles = require('../data/profiles.js');
-             profiles.updateProfileName(profileId, playerName);
-             roomManager.rooms.get(result.data.roomCode).players[socket.id].profileId = profileId;
-          }
 
           if (typeof callback === 'function') {
             callback({ 
@@ -91,15 +80,7 @@ function registerHandlers(io, roomManager) {
       }
     });
 
-    socket.on(EVENTS.GET_PROFILE, (data, callback) => {
-      try {
-        const profiles = require('../data/profiles.js');
-        const p = profiles.getProfile(data.profileId);
-        if (typeof callback === 'function') callback({ success: true, profile: p });
-      } catch (err) {
-        if (typeof callback === 'function') callback({ success: false, error: err.message });
-      }
-    });
+
 
     socket.on(EVENTS.LEAVE_ROOM, (data, callback) => {
       try {
