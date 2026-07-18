@@ -1,77 +1,127 @@
-# 🌀 The Ever Maze
+# Lumina
 
-A **real-time multiplayer 3D maze game** built with Node.js, Socket.IO, and React.
+> **Two Teams. One Treasure. One Winner.**
 
-## 🎮 Gameplay
+Browser-Based · Real-Time Multiplayer · No Accounts · Procedural Maps
 
-Two teams compete in a procedurally generated 3D maze. Find the **Lost Light**, carry it to the **Exit**, and channel it to win — but watch out, enemies can **tag** you and steal the light!
+---
 
-### Features
-- 🏰 **3D First-Person Raycaster** — Wolfenstein-style rendering in a browser
-- 👥 **Real-time Multiplayer** — Up to 14 players across 2 teams
-- 💡 **Lost Light System** — Find, carry, and defend the glowing artifact
-- 🎁 **7 Power-Ups** — Freeze, Dash, Shield, Mist, Compass, Magic Key, Silent Steps
-- 🌀 **Wall Shifts** — Sections of the maze reconfigure mid-match
-- ⏱️ **Sudden Death** — Overtime mode when the timer runs out
-- 🤖 **Bot AI** — Play solo with CPU-controlled opponents
-- 🗺️ **Minimap** — Real-time radar showing visible areas
-- 🔊 **Sound Engine** — Footsteps, pickups, heartbeat, and more
-- 📱 **Mobile Support** — Virtual joystick for touch devices
-
-### Controls
-- **W/S** — Move forward/back
-- **A/D** — Turn left/right
-- **Click & Drag** — Mouse look
-- **E or Space** — Use power-up
-- **Enter** — Open chat
-- **Escape** — Close chat
-
-## 🚀 Running Locally
-
-```bash
-# Install all dependencies
-npm install
-npm install --prefix client
-npm install --prefix server
-
-# Start development servers
-npm run dev --prefix server   # Backend on :3001
-npm run dev --prefix client   # Frontend on :5173
-```
-
-## 🏗️ Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 19, Vite, TailwindCSS |
-| Rendering | HTML5 Canvas (Raycaster) |
-| Backend | Node.js, Express |
-| Real-time | Socket.IO |
-| Maze Gen | Recursive DFS algorithm |
-| Audio | Web Audio API |
+| Client Renderer | Three.js / WebGL |
+| Client UI | React + TailwindCSS |
+| Client State | Zustand |
+| Transport | Socket.io 4.x |
+| Game Server | Node.js + Socket.io |
+| HTTP Server | Express |
+| Shared Logic | JavaScript ESM |
 
-## 📁 Project Structure
+---
+
+## Project Structure
 
 ```
-The_Ever_Maze_Game/
-├── client/          # React frontend
-│   └── src/
-│       ├── components/   # UI components
-│       ├── game/         # Renderer, Audio
-│       ├── hooks/        # Player controller, store
-│       └── socket/       # Socket.IO client
-├── server/          # Node.js backend
-│   └── src/
-│       ├── game/         # Game loop, Bot AI, Maze gen
-│       ├── networking/   # Socket event handlers
-│       └── rooms/        # Room & player management
-└── shared/          # Shared constants (events, config)
+lumina/
+├── client/          # Vite + React frontend
+├── server/          # Node.js + Express backend
+├── shared/          # Shared constants & game config (imported by both)
+│   ├── constants.js # ALL event names and enums
+│   └── gameConfig.js# ALL numeric game values
+└── tests/
+    ├── unit/
+    ├── integration/
+    └── e2e/
 ```
 
-## 🌐 Environment Variables
+---
 
-| Variable | Description | Default |
+## Getting Started
+
+### Prerequisites
+- Node.js v18+
+- npm v9+
+
+### 1. Start the Backend
+
+```bash
+cd server
+npm install
+npm run dev
+```
+
+Server will start on **http://localhost:3001**
+
+Verify: `GET http://localhost:3001/health` should return:
+```json
+{ "status": "ok", "rooms": 0, "players": 0, "timestamp": ... }
+```
+
+### 2. Start the Frontend
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+Frontend will start on **http://localhost:5173**
+
+---
+
+## Environment Variables
+
+### Server (`server/.env`)
+```
+PORT=3001
+CLIENT_ORIGIN=http://localhost:5173
+```
+
+### Client (`client/.env`)
+```
+VITE_SERVER_URL=http://localhost:3001
+```
+
+---
+
+## Module Build Order
+
+All 25 modules must be built in strict order. Never skip. Never combine.
+
+| # | Module | Status |
 |---|---|---|
-| `PORT` | Server port | `3001` |
-| `NODE_ENV` | Environment | `development` |
-| `CLIENT_ORIGIN` | Allowed CORS origin | `*` |
+| 01 | Project Architecture | ✅ COMPLETE |
+| 02 | Session System | PENDING |
+| 03 | Landing UI | PENDING |
+| 04 | Lobby System | PENDING |
+| 05 | Map Generator | PENDING |
+| 06 | Map Renderer | PENDING |
+| 07 | Character Controller | PENDING |
+| 08 | Third-Person Camera | PENDING |
+| 09 | Animation System | PENDING |
+| 10 | Multiplayer Sync | PENDING |
+| 11 | Treasure System | PENDING |
+| 12 | Timer System | PENDING |
+| 13 | Combat System | PENDING |
+| 14 | Win & Draw System | PENDING |
+| 15 | Game HUD | PENDING |
+| 16 | Victory & Draw Screens | PENDING |
+| 17 | Audio System | PENDING |
+| 18 | Mobile Controls | PENDING |
+| 19 | Optimization | PENDING |
+| 20 | Accessibility | PENDING |
+| 21 | Testing Suite | PENDING |
+| 22 | Security & Anti-Cheat | PENDING |
+| 23 | Deployment | PENDING |
+| 24 | Production QA | PENDING |
+| 25 | Launch | PENDING |
+
+---
+
+## Coding Standards
+
+- All numeric values live in `shared/gameConfig.js` — **no magic numbers elsewhere**
+- All event names live in `shared/constants.js`
+- Server is always the authority. Client only renders what the server sends.
+- One module per session. Testing checklist is the gate before moving on.

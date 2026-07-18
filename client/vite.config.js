@@ -1,29 +1,21 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react()],
   resolve: {
     alias: {
       '@shared': path.resolve(__dirname, '../shared')
     }
   },
   server: {
+    port: 5173,
     proxy: {
       '/socket.io': {
-        target: 'http://localhost:3000',
+        target: 'http://localhost:3001',
         ws: true
       }
     }
-  },
-  build: {
-    commonjsOptions: {
-      include: [/shared/, /node_modules/]
-    }
-  },
-  optimizeDeps: {
-    include: ['@shared/constants.js']
   }
 });
