@@ -85,7 +85,6 @@ const PLAYER_COLORS = [
   '#f87171', // Red
   '#c084fc', // Purple
   '#fb923c', // Orange
-  '#ffffff', // White
 ];
 
 const MAZE_TYPE = {
