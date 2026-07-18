@@ -51,7 +51,7 @@ export default function GameScreen() {
   const myActualSocketId = socket.id;
   const initialPosition = myPlayer?.position;
 
-  const { playerRef, keys, joystickRef, headBobRef, handleMouseMove, updateRotation, updateMovement } = usePlayerController(maze, initialPosition);
+  const { playerRef, keys, joystickRef, headBobRef, handleMouseMove, updateRotation, updateMovement, isThirdPersonRef } = usePlayerController(maze, initialPosition);
 
   const matchPhase = room?.match?.phase;
 
@@ -146,7 +146,7 @@ export default function GameScreen() {
       const p = updateMovement(dt, isCarrier, currentMyPlayer);
       
       // Draw 3D world (walls + other players + light + gifts)
-      drawMaze(ctx, maze, canvas.width, canvas.height, p, playersRef.current, myActualSocketId, room?.match?.lostLight, room?.match?.gifts, currentMyPlayer, matchPhaseRef.current, headBobRef.current.offset);
+      drawMaze(ctx, maze, canvas.width, canvas.height, p, playersRef.current, myActualSocketId, room?.match?.lostLight, room?.match?.gifts, currentMyPlayer, matchPhaseRef.current, headBobRef.current.offset, isThirdPersonRef.current);
       
       requestRef.current = requestAnimationFrame(renderFrame);
     };

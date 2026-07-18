@@ -14,9 +14,10 @@ export function usePlayerController(maze, initialPosition) {
     planeY: 0.66,
   });
 
-  const keys = useRef({ w: false, a: false, s: false, d: false, ArrowLeft: false, ArrowRight: false });
+  const keys = useRef({ w: false, a: false, s: false, d: false, ArrowLeft: false, ArrowRight: false, v: false });
   const joystickRef = useRef({ x: 0, y: 0 });
   const headBobRef = useRef({ timer: 0, offset: 0 });
+  const isThirdPersonRef = useRef(false);
 
   // Always sync position to server (even when standing still)
   // so the server can check proximity for gifts and the lost light
@@ -36,6 +37,9 @@ export function usePlayerController(maze, initialPosition) {
   useEffect(() => {
     const handleKeyDown = (e) => { 
       const key = e.key.toLowerCase();
+      if (key === 'v' && keys.current['v'] !== undefined && !keys.current['v']) {
+        isThirdPersonRef.current = !isThirdPersonRef.current;
+      }
       if (keys.current[key] !== undefined) keys.current[key] = true;
       if (keys.current[e.key] !== undefined) keys.current[e.key] = true; 
     };
@@ -159,6 +163,7 @@ export function usePlayerController(maze, initialPosition) {
     headBobRef,
     handleMouseMove,
     updateRotation,
-    updateMovement
+    updateMovement,
+    isThirdPersonRef
   };
 }

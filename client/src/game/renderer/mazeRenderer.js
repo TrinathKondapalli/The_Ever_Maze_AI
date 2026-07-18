@@ -53,7 +53,7 @@ export function spawnGiftEffect(x, y, type) {
   }
 }
 
-export function drawMaze(ctx, maze, width, height, player, allPlayers, myId, lostLight, gifts, myPlayer, matchPhase, headBobOffset = 0) {
+export function drawMaze(ctx, maze, width, height, player, allPlayers, myId, lostLight, gifts, myPlayer, matchPhase, headBobOffset = 0, isThirdPerson = false) {
   if (!maze || !player) return;
 
   const isSuddenDeath = matchPhase === 'SUDDEN_DEATH';
@@ -73,7 +73,53 @@ export function drawMaze(ctx, maze, width, height, player, allPlayers, myId, los
      ctx.fillRect(0, middleY, width, height - middleY);
   }
 
-  const { x, y, dirX, dirY, planeX, planeY } = player;
+  let camX = player.x;
+  let camY = player.y;
+
+  if (isThirdPerson) {
+    let backDirX = -player.dirX;
+    let backDirY = -player.dirY;
+    let mapX = Math.floor(camX);
+    let mapY = Math.floor(camY);
+    let deltaDistX = (backDirX === 0) ? 1e30 : Math.abs(1 / backDirX);
+    let deltaDistY = (backDirY === 0) ? 1e30 : Math.abs(1 / backDirY);
+    let sideDistX, sideDistY, stepX, stepY;
+
+    if (backDirX < 0) { stepX = -1; sideDistX = (camX - mapX) * deltaDistX; }
+    else { stepX = 1; sideDistX = (mapX + 1.0 - camX) * deltaDistX; }
+    if (backDirY < 0) { stepY = -1; sideDistY = (camY - mapY) * deltaDistY; }
+    else { stepY = 1; sideDistY = (mapY + 1.0 - camY) * deltaDistY; }
+
+    let hit = 0;
+    let side;
+    let maxDist = 2.0; 
+    let perpWallDist = 0;
+
+    while (hit === 0 && perpWallDist < maxDist) {
+      if (sideDistX < sideDistY) { sideDistX += deltaDistX; mapX += stepX; side = 0; }
+      else { sideDistY += deltaDistY; mapY += stepY; side = 1; }
+      
+      if (mapX < 0 || mapY < 0 || mapY >= maze.length || mapX >= maze[mapY].length) {
+        hit = 1;
+      } else if (maze[mapY][mapX] === TILE.WALL) {
+        hit = 1;
+      }
+
+      if (side === 0) perpWallDist = (sideDistX - deltaDistX);
+      else perpWallDist = (sideDistY - deltaDistY);
+    }
+
+    if (hit === 1 && perpWallDist < maxDist) {
+      maxDist = Math.max(0, perpWallDist - 0.3);
+    }
+    
+    camX = player.x - player.dirX * maxDist;
+    camY = player.y - player.dirY * maxDist;
+  }
+
+  const { dirX, dirY, planeX, planeY } = player;
+  const x = camX;
+  const y = camY;
   
   // Z-Buffer for sprite occlusion
   const zBuffer = new Array(width);
@@ -219,7 +265,19 @@ export function drawMaze(ctx, maze, width, height, player, allPlayers, myId, los
   
   if (allPlayers && myId) {
     for (const id in allPlayers) {
-      if (id === myId) continue;
+      if (id === myId) {
+        if (!isThirdPerson) continue;
+        const other = allPlayers[id];
+        sprites.push({
+           type: 'player',
+           x: player.x,
+           y: player.y,
+           team: other.team,
+           color: other.color,
+           isCarrier: lostLight?.carrierId === id
+        });
+        continue;
+      }
       const other = allPlayers[id];
       if (other.position) {
         sprites.push({
