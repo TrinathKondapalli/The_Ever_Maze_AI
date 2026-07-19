@@ -58,7 +58,12 @@ export class RemotePlayerInterpolator {
     }
 
     // If renderTime is older than all buffer entries, use the oldest pair
+    // If renderTime is newer than all entries (server lag), clamp to the newest entry
     if (!prev) {
+      const newest = buf[buf.length - 1];
+      if (renderTime > newest.t) {
+        return { x: newest.x, y: newest.y, z: newest.z, yaw: newest.yaw };
+      }
       prev = buf[0];
       next = buf[1];
     }
