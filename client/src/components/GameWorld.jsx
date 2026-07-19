@@ -59,7 +59,7 @@ export default function GameWorld({ seed }) {
     );
 
     // ── 5. Lights ──────────────────────────────────────────────────────
-    scene.add(new THREE.AmbientLight(0xffffff, 0.18));
+    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
 
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.55);
     dirLight.position.set(80, 120, 80);
