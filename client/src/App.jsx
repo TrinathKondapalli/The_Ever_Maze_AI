@@ -9,6 +9,9 @@ import Lobby from './components/Lobby.jsx';
 import GameWorld from './components/GameWorld.jsx';
 import VictoryScreen from './components/VictoryScreen.jsx';
 import socket from './socket/socket.js';
+import { audioManager } from './audio/AudioManager.js';
+
+audioManager.init();
 
 // ── App Shell ────────────────────────────────────────────────────────
 export default function App() {
@@ -30,6 +33,22 @@ export default function App() {
   const { isInitializing, hasSession, startSession, clearSession } = useSession();
 
   const [winData, setWinData] = React.useState(null);
+  const [isMuted, setIsMuted] = React.useState(false);
+
+  // Audio track switching based on screen
+  useEffect(() => {
+    if (screen === UI_SCREEN.GAME) {
+      audioManager.playBGM('game');
+    } else {
+      audioManager.playBGM('lobby');
+    }
+  }, [screen]);
+
+  const toggleMute = () => {
+    const next = !isMuted;
+    setIsMuted(next);
+    audioManager.setMuted(next);
+  };
 
   // Socket sync listeners
   useEffect(() => {
@@ -57,7 +76,17 @@ export default function App() {
 
     // Treasure — revealed / found event
     socket.on(EVENTS.TREASURE_FOUND, ({ treasure }) => {
+      if (treasure) {
+        setTreasure(treasure);
+        if (treasure.carrierId) {
+          audioManager.play('pickup', 0.7);
+        }
+      }
+    });
+
+    socket.on(EVENTS.TREASURE_STOLEN, ({ treasure }) => {
       if (treasure) setTreasure(treasure);
+      audioManager.play('steal', 0.8);
     });
 
     // STATE_UPDATE also carries treasure snapshot each tick
@@ -77,11 +106,19 @@ export default function App() {
     socket.on(EVENTS.MATCH_WIN, (data) => {
       setWinData(data);
       setScreen(UI_SCREEN.VICTORY);
+      
+      const p = useGameStore.getState().player;
+      if (p && p.team === data.team) {
+        audioManager.play('win', 0.8);
+      } else {
+        audioManager.play('lose', 0.8);
+      }
     });
 
     socket.on(EVENTS.MATCH_DRAW, (data) => {
       setWinData(data);
       setScreen(UI_SCREEN.VICTORY);
+      audioManager.play('lose', 0.8);
     });
 
     return () => {
@@ -94,6 +131,7 @@ export default function App() {
       socket.off(EVENTS.ROOM_ERROR);
       socket.off(EVENTS.MATCH_WIN);
       socket.off(EVENTS.MATCH_DRAW);
+      socket.off(EVENTS.TREASURE_STOLEN);
     };
   }, [setRoom, setScreen, setMapSeed, setRemotePlayer, removeRemotePlayer, setTreasure, addChatMessage, clearChat]);
 
@@ -110,7 +148,17 @@ export default function App() {
   }
 
   return (
-    <div style={styles.root}>
+    <div style={styles.root} className="relative">
+      
+      {/* Global Mute Toggle */}
+      <button 
+        onClick={toggleMute}
+        className="absolute top-4 right-4 z-50 bg-[#1e2235] hover:bg-[#2c2f44] text-white p-2 rounded-full shadow-lg border border-[#3f435e] transition-colors"
+        title="Toggle Audio"
+      >
+        {isMuted ? '🔇' : '🔊'}
+      </button>
+
       {/* Background 3D scene only on landing screen */}
       {screen === UI_SCREEN.LANDING && <HeroCanvas />}
 

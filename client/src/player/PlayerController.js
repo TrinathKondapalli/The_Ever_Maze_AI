@@ -3,6 +3,7 @@ import { GAME_CONFIG } from '@shared/gameConfig.js';
 import { EVENTS } from '@shared/constants.js';
 import { CollisionDetector } from './CollisionDetector.js';
 import socket from '../socket/socket.js';
+import { audioManager } from '../audio/AudioManager.js';
 
 /**
  * PlayerController — handles movement physics with client-side prediction.
@@ -49,6 +50,8 @@ export class PlayerController {
 
     // One-shot jump guard (don't hold Space to bunny-hop)
     this._jumpPressed   = false;
+
+    this._stepDistance = 0;
 
     // Camera toggle
     this.isThirdPerson = false;
@@ -105,11 +108,24 @@ export class PlayerController {
     this.position.x = clamped.x;
     this.position.z = clamped.z;
 
+    // Footstep sounds
+    if (this.isGrounded && (dx !== 0 || dz !== 0)) {
+      this._stepDistance += Math.sqrt(dx * dx + dz * dz);
+      // Play step every ~1.5 meters (faster if sprinting)
+      if (this._stepDistance > 1.8) {
+        this._stepDistance = 0;
+        audioManager.play('step', 0.2);
+      }
+    } else {
+      this._stepDistance = 0;
+    }
+
     // ── 5. Vertical / gravity / jump ─────────────────────────────────
     if (input.jump && this.isGrounded && !this._jumpPressed) {
       // v² = 2gh → v = sqrt(2 * |g| * jumpHeight)
       this.velocity.y = Math.sqrt(2 * Math.abs(GRAVITY) * GAME_CONFIG.JUMP_HEIGHT);
       this.isGrounded = false;
+      audioManager.play('jump', 0.4);
     }
     this._jumpPressed = input.jump;
 
@@ -163,6 +179,7 @@ export class PlayerController {
       if (now - this._lastAttackTime >= GAME_CONFIG.ATTACK_COOLDOWN_MS) {
         this._lastAttackTime = now;
         socket.emit(EVENTS.PLAYER_ATTACK);
+        audioManager.play('attack', 0.5);
         
         // Local hit animation (optional, Module 11 visual feedback)
         // We could dispatch a custom event here for GameWorld/HUD to catch
