@@ -74,9 +74,17 @@ export default function GameWorld({ seed }) {
     scene.add(dirLight);
 
     // Biome accent lights
-    scene.add(Object.assign(new THREE.PointLight(0x00c9a7, 5, 100), { position: { x: 4*16, y: 12, z: 4*16 } }));
-    scene.add(Object.assign(new THREE.PointLight(0x4cc9f0, 5, 100), { position: { x: 12*16, y: 12, z: 12*16 } }));
-    scene.add(Object.assign(new THREE.PointLight(0xf72585, 5, 100), { position: { x: 20*16, y: 12, z: 20*16 } }));
+    const light1 = new THREE.PointLight(0x00c9a7, 5, 100);
+    light1.position.set(4*16, 12, 4*16);
+    scene.add(light1);
+
+    const light2 = new THREE.PointLight(0x4cc9f0, 5, 100);
+    light2.position.set(12*16, 12, 12*16);
+    scene.add(light2);
+
+    const light3 = new THREE.PointLight(0xf72585, 5, 100);
+    light3.position.set(20*16, 12, 20*16);
+    scene.add(light3);
 
     // ── 6. Map chunks & instanced props ───────────────────────────────
     const chunkLoader = new ChunkLoader(scene);
@@ -211,8 +219,8 @@ export default function GameWorld({ seed }) {
 
       // Detect local player near exit door and emit exit attempt
       if (now - lastExitEmit > 1000) {
-        const dx = playerCtrl.position.x - exitDoor.root.position.x;
-        const dz = playerCtrl.position.z - exitDoor.root.position.z;
+        const dx = playerCtrl.position.x - exitDoor.group.position.x;
+        const dz = playerCtrl.position.z - exitDoor.group.position.z;
         const distSq = dx * dx + dz * dz;
         const triggerRadius = GAME_CONFIG.EXIT_TRIGGER_RADIUS || 1.5;
 

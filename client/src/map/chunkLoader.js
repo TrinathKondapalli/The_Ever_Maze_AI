@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { buildChunkMesh, createBiomeMaterials } from './chunkMeshBuilder.js';
 import { BIOME_TYPE } from '@shared/constants.js';
 
@@ -8,21 +9,19 @@ function createPropResources() {
   const geometries = {
     tree_small: (() => {
       // Cylinder trunk + Cone foliage
-      const g = new THREE.CylinderGeometry(0.15, 0.25, 1.2, 5);
-      g.translate(0, 0.6, 0);
+      const trunk = new THREE.CylinderGeometry(0.15, 0.25, 1.2, 5);
+      trunk.translate(0, 0.6, 0);
       const foliage = new THREE.ConeGeometry(0.9, 2.2, 5);
       foliage.translate(0, 1.8, 0);
-      g.merge(foliage);
-      return g;
+      return mergeGeometries([trunk, foliage]);
     })(),
     shroom_glowing: (() => {
       // Cylinder stem + Sphere cap
-      const g = new THREE.CylinderGeometry(0.08, 0.12, 0.4, 4);
-      g.translate(0, 0.2, 0);
+      const stem = new THREE.CylinderGeometry(0.08, 0.12, 0.4, 4);
+      stem.translate(0, 0.2, 0);
       const cap = new THREE.SphereGeometry(0.25, 5, 4);
       cap.translate(0, 0.4, 0);
-      g.merge(cap);
-      return g;
+      return mergeGeometries([stem, cap]);
     })(),
     rock_small: new THREE.DodecahedronGeometry(0.5, 0),
     ruin_column_broken: (() => {
@@ -39,12 +38,11 @@ function createPropResources() {
       return g;
     })(),
     cavelight_flower: (() => {
-      const g = new THREE.CylinderGeometry(0.04, 0.04, 0.3, 4);
-      g.translate(0, 0.15, 0);
+      const stem = new THREE.CylinderGeometry(0.04, 0.04, 0.3, 4);
+      stem.translate(0, 0.15, 0);
       const petals = new THREE.ConeGeometry(0.2, 0.2, 4);
       petals.translate(0, 0.3, 0);
-      g.merge(petals);
-      return g;
+      return mergeGeometries([stem, petals]);
     })(),
   };
 
