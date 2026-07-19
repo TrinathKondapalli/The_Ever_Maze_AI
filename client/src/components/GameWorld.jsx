@@ -335,7 +335,15 @@ export default function GameWorld({ seed }) {
           className="absolute inset-0 z-40 flex items-center justify-center cursor-pointer"
           onClick={() => {
             const canvas = containerRef.current?.querySelector('canvas');
-            if (canvas) canvas.requestPointerLock();
+            if (canvas) {
+              const promise = canvas.requestPointerLock();
+              if (promise) {
+                promise.catch(err => {
+                  console.error("Pointer lock error:", err);
+                  alert("Pointer lock blocked by browser: " + err.message + "\n\nPlease ensure you are clicking inside the window. If you are in an iframe/preview, open the game in a new tab.");
+                });
+              }
+            }
           }}
         >
           <div className="bg-[#0D1B2A]/90 border border-[#00C9A7]/30 rounded-xl px-8 py-5 text-center shadow-2xl">
