@@ -331,7 +331,13 @@ export default function GameWorld({ seed }) {
 
       {/* Click-to-lock prompt */}
       {!loading && !isPointerLocked && (
-        <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
+        <div
+          className="absolute inset-0 z-40 flex items-center justify-center cursor-pointer"
+          onClick={() => {
+            const canvas = containerRef.current?.querySelector('canvas');
+            if (canvas) canvas.requestPointerLock();
+          }}
+        >
           <div className="bg-[#0D1B2A]/90 border border-[#00C9A7]/30 rounded-xl px-8 py-5 text-center shadow-2xl">
             <p className="text-[#00C9A7] font-bold uppercase tracking-widest text-sm mb-1">
               Click to enter arena
