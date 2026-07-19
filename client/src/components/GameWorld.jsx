@@ -12,6 +12,7 @@ import { RemotePlayerInterpolator } from '../player/RemotePlayerInterpolator.js'
 import { useGameStore } from '../store/gameStore.js';
 import socket from '../socket/socket.js';
 import { EVENTS } from '@shared/constants.js';
+import { GAME_CONFIG } from '@shared/gameConfig.js';
 
 export default function GameWorld({ seed }) {
   const containerRef        = useRef(null);
@@ -51,7 +52,7 @@ export default function GameWorld({ seed }) {
 
     // ── 4. Camera ──────────────────────────────────────────────────────
     const camera = new THREE.PerspectiveCamera(
-      GAME_CONFIG_FOV,
+      GAME_CONFIG.FOV_DEFAULT,
       container.clientWidth / container.clientHeight,
       0.1,
       600
@@ -352,5 +353,4 @@ export default function GameWorld({ seed }) {
   );
 }
 
-// Inline constant to avoid circular import with GAME_CONFIG (FOV only)
-const GAME_CONFIG_FOV = 75;
+
