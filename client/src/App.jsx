@@ -57,7 +57,14 @@ export default function App() {
       if (room) {
         if (room.matchState === MATCH_STATE.ROOM_LOBBY || room.matchState === MATCH_STATE.COUNTDOWN) {
           setScreen(UI_SCREEN.LOBBY);
-        } else if (room.matchState === MATCH_STATE.MAP_LOADING) {
+        } else if (
+          room.matchState === MATCH_STATE.MAP_LOADING ||
+          room.matchState === MATCH_STATE.SEARCHING ||
+          room.matchState === MATCH_STATE.TREASURE_FOUND ||
+          room.matchState === MATCH_STATE.CHASE ||
+          room.matchState === MATCH_STATE.STOLEN
+        ) {
+          if (room.mapSeed) setMapSeed(room.mapSeed);
           setScreen(UI_SCREEN.GAME); // Transition to game view
         }
       } else {

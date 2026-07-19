@@ -36,7 +36,8 @@ function sanitizeRoom(room) {
     hostSocketId,
     matchState: room.matchState,
     players: sanitizedPlayers,
-    chatMessages: room.chatMessages
+    chatMessages: room.chatMessages,
+    mapSeed: room.map ? room.map.seed : null
   };
 }
 
