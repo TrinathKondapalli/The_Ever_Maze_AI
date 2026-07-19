@@ -1,43 +1,125 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useUiStore } from './store/uiStore.js';
-import { UI_SCREEN } from '@shared/constants.js';
-
-// ── View Stubs (will be replaced module by module) ──────────────────
-const LandingView = () => (
-  <div style={styles.view}>
-    <h1 style={styles.title}>LUMINA</h1>
-    <p style={styles.tagline}>Two Teams. One Treasure. One Winner.</p>
-    <p style={styles.stub}>[ Module 03: Landing UI — PENDING ]</p>
-  </div>
-);
-
-const LobbyView = () => (
-  <div style={styles.view}>
-    <h2 style={styles.title}>Lobby</h2>
-    <p style={styles.stub}>[ Module 04: Lobby System — PENDING ]</p>
-  </div>
-);
-
-const GameView = () => (
-  <div style={styles.view}>
-    <h2 style={styles.title}>Game</h2>
-    <p style={styles.stub}>[ Module 06+: Game World — PENDING ]</p>
-  </div>
-);
+import { useGameStore } from './store/gameStore.js';
+import { UI_SCREEN, EVENTS, MATCH_STATE } from '@shared/constants.js';
+import { useSession } from './auth/useSession.js';
+import LandingPage from './components/LandingPage.jsx';
+import HeroCanvas from './components/HeroCanvas.jsx';
+import Lobby from './components/Lobby.jsx';
+import GameWorld from './components/GameWorld.jsx';
+import socket from './socket/socket.js';
 
 // ── App Shell ────────────────────────────────────────────────────────
 export default function App() {
   const screen = useUiStore((state) => state.screen);
+  const setScreen = useUiStore((state) => state.setScreen);
+  const chatMessages = useUiStore((state) => state.chatMessages);
+  const addChatMessage = useUiStore((state) => state.addChatMessage);
+  const clearChat = useUiStore((state) => state.clearChat);
+
+  const player = useGameStore((state) => state.player);
+  const room = useGameStore((state) => state.room);
+  const setRoom = useGameStore((state) => state.setRoom);
+  const mapSeed          = useGameStore((s) => s.mapSeed);
+  const setMapSeed        = useGameStore((s) => s.setMapSeed);
+  const setRemotePlayer    = useGameStore((s) => s.setRemotePlayer);
+  const removeRemotePlayer = useGameStore((s) => s.removeRemotePlayer);
+  const setTreasure        = useGameStore((s) => s.setTreasure);
+
+  const { isInitializing, hasSession, startSession, clearSession } = useSession();
+
+  // Socket sync listeners
+  useEffect(() => {
+    socket.on(EVENTS.ROOM_UPDATE, ({ room }) => {
+      setRoom(room);
+      if (room) {
+        if (room.matchState === MATCH_STATE.ROOM_LOBBY || room.matchState === MATCH_STATE.COUNTDOWN) {
+          setScreen(UI_SCREEN.LOBBY);
+        } else if (room.matchState === MATCH_STATE.MAP_LOADING) {
+          setScreen(UI_SCREEN.GAME); // Transition to game view
+        }
+      } else {
+        // Returned to landing page
+        setScreen(UI_SCREEN.LANDING);
+        clearChat();
+      }
+    });
+
+    socket.on(EVENTS.MATCH_START, ({ seed }) => {
+      console.log(`[App] Match start, setting seed: ${seed}`);
+      setMapSeed(seed);
+    });
+
+    socket.on(EVENTS.PLAYER_ELIMINATED, ({ id }) => removeRemotePlayer(id));
+
+    // Treasure — revealed / found event
+    socket.on(EVENTS.TREASURE_FOUND, ({ treasure }) => {
+      if (treasure) setTreasure(treasure);
+    });
+
+    // STATE_UPDATE also carries treasure snapshot each tick
+    socket.on(EVENTS.STATE_UPDATE, ({ players, treasure: tSnap }) => {
+      if (players) Object.values(players).forEach((snap) => setRemotePlayer(snap));
+      if (tSnap)   setTreasure(tSnap);
+    });
+
+    socket.on(EVENTS.CHAT_MESSAGE, ({ message }) => {
+      addChatMessage(message);
+    });
+
+    socket.on(EVENTS.ROOM_ERROR, ({ message }) => {
+      alert(message);
+    });
+
+    return () => {
+      socket.off(EVENTS.ROOM_UPDATE);
+      socket.off(EVENTS.MATCH_START);
+      socket.off(EVENTS.STATE_UPDATE);
+      socket.off(EVENTS.PLAYER_ELIMINATED);
+      socket.off(EVENTS.TREASURE_FOUND);
+      socket.off(EVENTS.CHAT_MESSAGE);
+      socket.off(EVENTS.ROOM_ERROR);
+    };
+  }, [setRoom, setScreen, setMapSeed, setRemotePlayer, removeRemotePlayer, setTreasure, addChatMessage, clearChat]);
+
+  if (isInitializing) {
+    return (
+      <div style={styles.root}>
+        <div className="text-center">
+          <p className="text-sm uppercase tracking-widest text-[#00C9A7] animate-pulse">
+            Connecting to Lumina...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.root}>
-      {screen === UI_SCREEN.LANDING && <LandingView />}
-      {screen === UI_SCREEN.LOBBY && <LobbyView />}
-      {screen === UI_SCREEN.GAME && <GameView />}
+      {/* Background 3D scene only on landing screen */}
+      {screen === UI_SCREEN.LANDING && <HeroCanvas />}
+
+      {screen === UI_SCREEN.LANDING && (
+        <LandingPage
+          hasSession={hasSession}
+          player={player}
+          onRegisterName={startSession}
+          onLogout={clearSession}
+        />
+      )}
+      {screen === UI_SCREEN.LOBBY && room && (
+        <Lobby
+          room={room}
+          localPlayerId={socket.id}
+          chatMessages={chatMessages}
+        />
+      )}
+      {screen === UI_SCREEN.GAME && mapSeed && (
+        <GameWorld seed={mapSeed} />
+      )}
     </div>
   );
 }
-
 // ── Inline styles (replaced by Tailwind in Module 03) ────────────────
 const styles = {
   root: {

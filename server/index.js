@@ -5,6 +5,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { registerSocketHandlers } from './src/networking/socketHandler.js';
 import { RoomManager } from './src/rooms/roomManager.js';
+import { SessionManager } from './src/sessions/sessionManager.js';
 
 dotenv.config();
 
@@ -22,8 +23,9 @@ const io = new Server(httpServer, {
 app.use(cors());
 app.use(express.json());
 
-// Initialize global room manager
+// Initialize managers
 const roomManager = new RoomManager();
+const sessionManager = new SessionManager();
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -36,7 +38,7 @@ app.get('/health', (req, res) => {
 });
 
 // Setup socket networking
-registerSocketHandlers(io, roomManager);
+registerSocketHandlers(io, roomManager, sessionManager);
 
 // Graceful shutdown
 const gracefulShutdown = () => {
