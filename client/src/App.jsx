@@ -7,6 +7,7 @@ import LandingPage from './components/LandingPage.jsx';
 import HeroCanvas from './components/HeroCanvas.jsx';
 import Lobby from './components/Lobby.jsx';
 import GameWorld from './components/GameWorld.jsx';
+import VictoryScreen from './components/VictoryScreen.jsx';
 import socket from './socket/socket.js';
 
 // ── App Shell ────────────────────────────────────────────────────────
@@ -27,6 +28,8 @@ export default function App() {
   const setTreasure        = useGameStore((s) => s.setTreasure);
 
   const { isInitializing, hasSession, startSession, clearSession } = useSession();
+
+  const [winData, setWinData] = React.useState(null);
 
   // Socket sync listeners
   useEffect(() => {
@@ -71,6 +74,16 @@ export default function App() {
       alert(message);
     });
 
+    socket.on(EVENTS.MATCH_WIN, (data) => {
+      setWinData(data);
+      setScreen(UI_SCREEN.VICTORY);
+    });
+
+    socket.on(EVENTS.MATCH_DRAW, (data) => {
+      setWinData(data);
+      setScreen(UI_SCREEN.VICTORY);
+    });
+
     return () => {
       socket.off(EVENTS.ROOM_UPDATE);
       socket.off(EVENTS.MATCH_START);
@@ -79,6 +92,8 @@ export default function App() {
       socket.off(EVENTS.TREASURE_FOUND);
       socket.off(EVENTS.CHAT_MESSAGE);
       socket.off(EVENTS.ROOM_ERROR);
+      socket.off(EVENTS.MATCH_WIN);
+      socket.off(EVENTS.MATCH_DRAW);
     };
   }, [setRoom, setScreen, setMapSeed, setRemotePlayer, removeRemotePlayer, setTreasure, addChatMessage, clearChat]);
 
@@ -116,6 +131,18 @@ export default function App() {
       )}
       {screen === UI_SCREEN.GAME && mapSeed && (
         <GameWorld seed={mapSeed} />
+      )}
+      {screen === UI_SCREEN.VICTORY && (
+        <VictoryScreen 
+          winData={winData} 
+          onReturnToLobby={() => {
+            // Usually the server forces this transition via ROOM_UPDATE,
+            // but we can allow early exit locally. We should ideally
+            // leave room or just wait for server. Let's just wait for server,
+            // or switch to LOBBY (which ROOM_UPDATE will do anyway).
+            setScreen(UI_SCREEN.LOBBY);
+          }} 
+        />
       )}
     </div>
   );

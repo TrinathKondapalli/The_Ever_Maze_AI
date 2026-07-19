@@ -105,4 +105,5 @@ export const UI_SCREEN = Object.freeze({
   LANDING: 'LANDING',
   LOBBY:   'LOBBY',
   GAME:    'GAME',
+  VICTORY: 'VICTORY',
 });

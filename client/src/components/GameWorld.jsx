@@ -97,6 +97,7 @@ export default function GameWorld({ seed }) {
 
     // Pickup cooldown guard (don't spam server)
     let lastPickupEmit = 0;
+    let lastExitEmit = 0;
 
     // ── 9. Player Controller ───────────────────────────────────────────
     const spawnGrid  = map.spawnA;
@@ -206,6 +207,23 @@ export default function GameWorld({ seed }) {
 
       // Update Exit Door Portal animations
       exitDoor.update(delta);
+
+      // Detect local player near exit door and emit exit attempt
+      if (now - lastExitEmit > 1000) {
+        const dx = playerCtrl.position.x - exitDoor.root.position.x;
+        const dz = playerCtrl.position.z - exitDoor.root.position.z;
+        const distSq = dx * dx + dz * dz;
+        const triggerRadius = GAME_CONFIG.EXIT_TRIGGER_RADIUS || 1.5;
+
+        if (distSq <= triggerRadius * triggerRadius) {
+          // Check if we are the carrier before emitting
+          const currentTreasure = useGameStore.getState().treasure;
+          if (currentTreasure && currentTreasure.carrierId === socket.id) {
+            lastExitEmit = now;
+            socket.emit(EVENTS.EXIT_ATTEMPT);
+          }
+        }
+      }
 
       // Drive remote player meshes via interpolator
       remotePlayerMeshes.forEach((mesh, id) => {

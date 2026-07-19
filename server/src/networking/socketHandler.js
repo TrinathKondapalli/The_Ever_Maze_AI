@@ -378,24 +378,58 @@ export function registerSocketHandlers(io, roomManager, sessionManager) {
       try {
         const sessionId = socket.session.sessionId;
         const room = roomManager.getRoomByPlayer(sessionId);
-        if (!room || !room.treasure || !room.map) return;
+        if (!room || !room.treasure || !room.map || !room.gameLoop) return;
 
         const player = room.players[sessionId];
-        if (!player) return;
+        const pState = room.playerStates[sessionId];
+        if (!player || !pState) return;
 
-        // Server-side: player position not tracked yet (Module 10)
-        // For now validate carrier identity only
+        // 1. Must be the carrier
         if (room.treasure.carrierId !== sessionId) {
           socket.emit(EVENTS.ROOM_ERROR, { message: 'You are not carrying the treasure.' });
           return;
         }
 
-        // Victory
-        room.matchState = MATCH_STATE.VICTORY;
+        // 2. Must be within trigger radius of exit door (server-authoritative check)
+        const dx = pState.x - room.map.exitPos.worldX;
+        const dz = pState.z - room.map.exitPos.worldZ;
+        const distSq = dx * dx + dz * dz;
+        const triggerRadius = GAME_CONFIG.EXIT_TRIGGER_RADIUS;
+
+        if (distSq > triggerRadius * triggerRadius) {
+          socket.emit(EVENTS.ROOM_ERROR, { message: 'You are too far from the exit door.' });
+          return;
+        }
+
+        // 3. Victory!
+        room.matchState = MATCH_STATE.POST_MATCH;
+        room.gameLoop.stop();
+
         io.to(room.code).emit(EVENTS.MATCH_WIN, {
           team:   player.team,
+          carrierId: sessionId,
           reason: 'exit',
         });
+
+        // 4. Start Post-Match Auto-Reset timer (60s)
+        setTimeout(() => {
+          const currentRoom = roomManager.getRoom(room.code);
+          if (currentRoom && currentRoom.matchState === MATCH_STATE.POST_MATCH) {
+             // Reset room state for rematch
+             currentRoom.matchState = MATCH_STATE.ROOM_LOBBY;
+             currentRoom.treasure = null;
+             currentRoom.map = null;
+             currentRoom.gameLoop = null;
+             currentRoom.playerStates = {};
+             // Un-ready all players
+             Object.values(currentRoom.players).forEach(p => p.isReady = false);
+
+             io.to(currentRoom.code).emit(EVENTS.ROOM_UPDATE, {
+               room: sanitizeRoom(currentRoom)
+             });
+          }
+        }, GAME_CONFIG.REMATCH_TIMEOUT_MS);
+
       } catch (err) {
         socket.emit(EVENTS.ROOM_ERROR, { message: err.message });
       }
